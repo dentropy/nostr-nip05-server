@@ -1,0 +1,119 @@
+{
+    "app_names": [
+        "dd-rbac"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "dentropydaemon"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org"
+    ],
+    "schemas": [
+        {
+            "schema_name": "user_to_role",
+            "logged": true,
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "upser_json_schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "CID": {
+                                "type": "string"
+                            },
+                            "previousCID": {
+                                "type": "string"
+                            },
+                            "content": {
+                                "type": "object",
+                                "properties": {
+                                    "user_did": {
+                                        "type": "string"
+                                    },
+                                    "user_multicodec": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "user_did",
+                                    "user_multicodec",
+                                    "role"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "CID",
+                            "previousCID",
+                            "content"
+                        ]
+                    }
+                },
+                "required": [
+                    "upser_json_schema"
+                ]
+            }
+        },
+        {
+            "schema_name": "app_name_to_role",
+            "logged": true,
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "CID": {
+                        "type": "string"
+                    },
+                    "previousCID": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "object",
+                        "properties": {
+                            "app_name": {
+                                "type": "string"
+                            },
+                            "IPNS_name": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            },
+                            "permission": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "app_name",
+                            "IPNS_name",
+                            "role",
+                            "permission"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "CID",
+                    "previousCID",
+                    "content"
+                ]
+            }
+        }
+    ]
+}

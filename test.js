@@ -49,7 +49,23 @@ const DDSchema = {
       type: 'object'
     }
   },
-  required: ['id', 'CID', 'DD']
+  required: ['id', 'CID', 'previousCID', 'content']
+}
+
+const CIDStoreSchema = {
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      maxLength: 100
+    },
+    CID: {
+      type: 'string'
+    }
+  },
+  required: ['id', 'CID', 'previousCID', 'content']
 }
 
 
@@ -57,6 +73,9 @@ console.log(Object.keys(myRxDatabase.collections))
 await myRxDatabase.addCollections({
   dd: {
     schema: DDSchema
+  },
+  cid_store : {
+    schema : CIDStoreSchema
   }
 });
 console.log(Object.keys(myRxDatabase.collections))

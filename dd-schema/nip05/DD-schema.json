@@ -1,0 +1,57 @@
+{
+    "app_names": [
+        "nip05"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "nostr"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org"
+    ],
+    "schemas": [
+        {
+            "schema_name": "internet_identifiers",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "cid": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "object",
+                        "properties": {
+                            "username": {
+                                "type": "string"
+                            },
+                            "domain_name": {
+                                "type": "string"
+                            },
+                            "relay_list": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "username",
+                            "domain_name",
+                            "relay_list"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "cid",
+                    "content"
+                ]
+            }
+        }
+    ]
+}
