@@ -12,60 +12,53 @@
     "schemas": [
         {
             "schema_name": "user_to_role",
-            "logged": true,
+            "index_type" : "logged",
             "rxdb_json": {
                 "version": 0,
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "upser_json_schema": {
+                    "id": {
+                        "type": "string",
+                        "maxLength" : 128
+                    },
+                    "CID": {
+                        "type": "string"
+                    },
+                    "previousCID": {
+                        "type": "string"
+                    },
+                    "content": {
                         "type": "object",
                         "properties": {
-                            "id": {
+                            "user_did": {
                                 "type": "string"
                             },
-                            "CID": {
+                            "user_multicodec": {
                                 "type": "string"
                             },
-                            "previousCID": {
+                            "role": {
                                 "type": "string"
-                            },
-                            "content": {
-                                "type": "object",
-                                "properties": {
-                                    "user_did": {
-                                        "type": "string"
-                                    },
-                                    "user_multicodec": {
-                                        "type": "string"
-                                    },
-                                    "role": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "user_did",
-                                    "user_multicodec",
-                                    "role"
-                                ]
                             }
                         },
                         "required": [
-                            "id",
-                            "CID",
-                            "previousCID",
-                            "content"
+                            "user_did",
+                            "user_multicodec",
+                            "role"
                         ]
                     }
                 },
                 "required": [
-                    "upser_json_schema"
+                    "id",
+                    "CID",
+                    "previousCID",
+                    "content"
                 ]
             }
         },
         {
             "schema_name": "app_name_to_role",
-            "logged": true,
+            "index_type" : "logged",
             "rxdb_json": {
                 "version": 0,
                 "primaryKey": "id",

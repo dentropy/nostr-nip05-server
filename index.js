@@ -10,9 +10,9 @@ app.use(express.json())
 let MyDDSchema = {}
 async function setup(){
     MyDDSchema = await DDSchema()
-    console.log("MY SCHEMA")
-    console.log(MyDDSchema)
-    console.log(Object.keys(MyDDSchema))
+    // console.log("MY SCHEMA")
+    // console.log(MyDDSchema)
+    // console.log(Object.keys(MyDDSchema))
 }
 await setup()
 

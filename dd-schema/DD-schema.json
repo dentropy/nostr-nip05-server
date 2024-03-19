@@ -10,7 +10,12 @@
         "dentropy@ddaemon.org"
     ],
     "dependencies" : [
-        "nip05"
+        "nip05",
+        "pki",
+        "dd20",
+        "lightning-bitcoin-to-dd20",
+        "dd-rbac",
+        "coupon-to-dd20"
     ],
     "schemas": [
         {
@@ -18,9 +23,13 @@
             "index_type" : "cached",
             "rxdb_json": {
                 "version": 0,
-                "primaryKey": "id",
+                "primaryKey": "domain_name",
                 "type": "object",
                 "properties": {
+                    "domain_name": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
                     "names": {
                       "type": "object",
                       "properties": {},
@@ -33,6 +42,7 @@
                     }
                   },
                   "required": [
+                    "domain_name",
                     "names",
                     "relays"
                   ]

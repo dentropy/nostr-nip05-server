@@ -5,7 +5,9 @@ import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import fs from 'node:fs';
 import ipns from 'ed25519-keygen/ipns';
 import { randomBytes } from 'ed25519-keygen/utils';
+import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 
+addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBDevModePlugin);
 
 let DDSchema = {}
@@ -111,13 +113,14 @@ const IPNSStoreSchema = {
   },
   "required": [
     "ipns",
-    "private_key"
+    "private_key",
+    "timestamp_ms"
   ]
 }
 
 
 await DDSchema.rxdb.addCollections({
-  root: {
+  ddroot: {
     schema: RootSchema
   },
   cid_store: {
@@ -133,8 +136,10 @@ async function setup_schema() {
   console.log("setup started")
 
   // Check if every dependency is included in the root schema
+
+
   // For now just add the root data
-  await DDSchema.rxdb.root.insert({
+  let upsert = await DDSchema.rxdb.ddroot.upsert({
     id: "root",
     CID: "CID_TODO",
     previousCID: "CID_TODO",
@@ -145,16 +150,18 @@ async function setup_schema() {
   });
 
 
-
   // console.log(JSON.stringify(DDSchema.specification, null, 2))
 
 
-
   // Create all IPNS directories
+  console.log(Object.keys(DDSchema.specification.schemas))
   for (let tmp_schema of DDSchema.specification.schemas) {
+    console.log(tmp_schema.schema_name)
+    let tmp_properties = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.properties))
+    let tmp_required = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.required))
     if (tmp_schema.index_type == "logged") {
+      console.log("Got Logged")
       try {
-        let tmp_properties = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.properties))
         tmp_schema.rxdb_json.properties = {
           id: {
             type: 'string',
@@ -170,66 +177,68 @@ async function setup_schema() {
           },
           content: {
             type: 'object',
-            properties: tmp_properties
+            properties: tmp_properties,
+            required: tmp_required
           }
         }
-        // console.log("tmp_schema")
-        // console.log(tmp_schema)
+        tmp_schema.rxdb_json.required = [
+          "id",
+          "CID",
+          "previousCID",
+          "content"
+        ]
+        console.log("GOT EM")
+        console.log(tmp_schema.rxdb_json)
+      } catch (error) {
+        console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)
+      }
+      // Generate IPNS name
+      const iseed = randomBytes(32);
+      const ikeys = await ipns(iseed);
+      console.log("\n")
+      console.log("IPNS_KEY")
+      console.log(ikeys.base36.substring(7))
+      console.log(tmp_schema.schema_name)
+      console.log(tmp_schema.rxdb_json)
+      var data = {
+        ipns: ikeys.base36.substring(7),
+        private_key: ikeys.privateKey,
+        timestamp_ms: new Date()
+      }
 
 
+      // Save IPNS name to ipns_store
+      await DDSchema.rxdb.ipns_store.upsert(data);
 
-      // Add collection
-    } catch (error) {
-      console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)
-    }
-  } else {
-        // Generate IPNS name
-        const iseed = randomBytes(32);
-        const ikeys = await ipns(iseed);
-        console.log("IPNS_KEY")
-        console.log(ikeys.publicKey)
-        var data = {
-          ipns: ikeys.base36.substring(7),
-          private_key: ikeys.privateKey,
-          timestamp_ms: new Date()
-        }
+      // Get root data to save updated IPNS name to root
+      let rootData = await DDSchema.rxdb.ddroot.find().where("id").equals("root").exec();
+      rootData = rootData[0]._data
+      rootData = JSON.parse(JSON.stringify(rootData))
+      rootData.content.app_ipns_lookup[tmp_schema.schema_name] = ikeys.base36.substring(7)
 
-
-        // Save IPNS name to ipns_store
-        await DDSchema.rxdb.root.upsert(data);
-
-
-        // Save IPNS name to root
-        // Get root data
-        let rootData = await DDSchema.rxdb.root.find({
-          selector: {
-            id: {
-              $eq: 'root'
-            }
-          }
-        }).exec();
-        rootData.documentInDb()
-        // Add schema
-        let collection_schema = {}
-        collection_schema[ikeys.base36.substring(7)] = {schema : tmp_schema}
-        DDSchema.rxdb.addCollections(collection_schema)
+      // Add schema
+      let collection_schema = {}
+      collection_schema[ikeys.base36.substring(7)] = {
+        schema: tmp_schema.rxdb_json
+      }
+      DDSchema.rxdb.addCollections(collection_schema)
 
       // Upsert root data
+      await DDSchema.rxdb.ddroot.upsert(rootData);
+    }
   }
+  console.log("schema setup complete")
+  return DDSchema
 }
-console.log("schema setup complete")
-return DDSchema
-}
-
 
 
 export default async function init() {
   // Check if root schema exists or not
   try {
-    const query = await DDSchema.rxdb.root
+    const query = await DDSchema.rxdb.ddroot
       .findOne({
         selector: {
-          name: 'alice'
+          id: 'root'
         }
       })
     console.log("Found previous root schema")
@@ -238,7 +247,8 @@ export default async function init() {
       return await setup_schema()
     }
   } catch (error) {
-    console.log("Can't find root schema, setting on eup")
+    console.log("Can't find root schema, setting on up")
+    console.log(error)
     return await setup_schema()
   }
 }
