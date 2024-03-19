@@ -176,14 +176,21 @@ async function setup_schema() {
         // console.log("tmp_schema")
         // console.log(tmp_schema)
 
+
+
+      // Add collection
+    } catch (error) {
+      console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)
+    }
+  } else {
         // Generate IPNS name
         const iseed = randomBytes(32);
         const ikeys = await ipns(iseed);
         console.log("IPNS_KEY")
         console.log(ikeys.publicKey)
         var data = {
-          ipns: ikeys.publicKey,
-          private_key: ikeys.publicKey,
+          ipns: ikeys.base36.substring(7),
+          private_key: ikeys.privateKey,
           timestamp_ms: new Date()
         }
 
@@ -194,26 +201,24 @@ async function setup_schema() {
 
         // Save IPNS name to root
         // Get root data
-        const foundDocuments = await DDSchema.rxdb.root.find({
+        let rootData = await DDSchema.rxdb.root.find({
           selector: {
             id: {
               $eq: 'root'
             }
           }
         }).exec();
+        rootData.documentInDb()
         // Add schema
+        let collection_schema = {}
+        collection_schema[ikeys.base36.substring(7)] = {schema : tmp_schema}
+        DDSchema.rxdb.addCollections(collection_schema)
 
-        // Upsert root data
-
-
-        // Add collection
-      } catch (error) {
-        console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)
-      }
-    }
+      // Upsert root data
   }
-  console.log("schema setup complete")
-  return DDSchema
+}
+console.log("schema setup complete")
+return DDSchema
 }
 
 

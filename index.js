@@ -26,7 +26,6 @@ app.get('/.well-known/nostr.json', async (req, res) => {
         "key" : "value"
     })
     return true
-
 });
 
 
