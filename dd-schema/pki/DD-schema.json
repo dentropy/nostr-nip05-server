@@ -1,0 +1,209 @@
+{
+    "app_names": [
+        "dd-private-key-infastructure"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "nostr"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org",
+        "nip05"
+    ],
+    "schemas": [
+        {
+            "schema_name": "public_keys",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "key_type": {
+                      "type": "string"
+                    },
+                    "did": {
+                      "type": "string"
+                    },
+                    "multicodec": {
+                      "type": "string"
+                    },
+                    "key_fingerprint": {
+                      "type": "string"
+                    },
+                    "raw_public_key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key_type",
+                    "did",
+                    "multicodec",
+                    "key_fingerprint",
+                    "raw_public_key"
+                  ]
+            }
+        },
+        {
+            "schema_name": "private_keys",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "key_type": {
+                      "type": "string"
+                    },
+                    "did": {
+                      "type": "string"
+                    },
+                    "multicodec": {
+                      "type": "string"
+                    },
+                    "key_fingerprint": {
+                      "type": "string"
+                    },
+                    "raw_public_key": {
+                      "type": "string"
+                    },
+                    "raw_private_key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key_type",
+                    "did",
+                    "multicodec",
+                    "key_fingerprint",
+                    "raw_public_key",
+                    "raw_private_key"
+                  ]
+            }
+        },
+        {
+            "schema_name": "pgp_data",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "internet_identifier": {
+                      "type": "string"
+                    },
+                    "raw_pgp_key": {
+                      "type": "string"
+                    },
+                    "key_fingerprint": {
+                      "type": "string"
+                    },
+                    "pub": {
+                      "type": "string"
+                    },
+                    "sub": {
+                      "type": "string"
+                    },
+                    "sec": {
+                      "type": "string"
+                    },
+                    "ssb": {
+                      "type": "string"
+                    },
+                    "uid": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "internet_identifier",
+                    "raw_pgp_key",
+                    "key_fingerprint",
+                    "pub",
+                    "sub",
+                    "sec",
+                    "ssb",
+                    "uid"
+                  ]
+            }
+        },
+        {
+            "schema_name": "well-known_data",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "dns_name": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "internet_identifier": {
+                      "type": "string"
+                    },
+                    "well-knwon_path": {
+                      "type": "string"
+                    },
+                    "well-known_url": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {},
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "dns_name",
+                    "username",
+                    "internet_identifier",
+                    "well-knwon_path",
+                    "well-known_url",
+                    "data"
+                  ]
+            }
+        },
+        {
+            "schema_name": "blockchain_keys",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "caip-10": {
+                      "type": "string"
+                    },
+                    "chain_id": {
+                      "type": "string"
+                    },
+                    "did": {
+                      "type": "string"
+                    },
+                    "multicodec": {
+                      "type": "string"
+                    },
+                    "key_type": {
+                      "type": "string"
+                    },
+                    "raw_public_key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "caip-10",
+                    "chain_id",
+                    "did",
+                    "multicodec",
+                    "key_type",
+                    "raw_public_key"
+                  ]
+            }
+        }
+    ]
+}

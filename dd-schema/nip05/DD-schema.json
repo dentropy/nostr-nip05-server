@@ -7,49 +7,35 @@
         "nostr"
     ],
     "authors": [
-        "dentropy@ddaemon.org"
+        "dentropy@ddaemon.org",
+        "nip05"
     ],
     "schemas": [
         {
             "schema_name": "internet_identifiers",
+            "index_type": "logged",
             "rxdb_json": {
                 "version": 0,
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "id": {
+                    "username": {
                         "type": "string"
                     },
-                    "cid": {
+                    "domain_name": {
                         "type": "string"
                     },
-                    "content": {
-                        "type": "object",
-                        "properties": {
-                            "username": {
-                                "type": "string"
-                            },
-                            "domain_name": {
-                                "type": "string"
-                            },
-                            "relay_list": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "required": [
-                            "username",
-                            "domain_name",
-                            "relay_list"
-                        ]
+                    "relay_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
-                    "id",
-                    "cid",
-                    "content"
+                    "username",
+                    "domain_name",
+                    "relay_list"
                 ]
             }
         }

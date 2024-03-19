@@ -1,0 +1,42 @@
+{
+    "app_names": [
+        "nostr-nip05-server"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "nostr"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org"
+    ],
+    "dependencies" : [
+        "nip05"
+    ],
+    "schemas": [
+        {
+            "schema_name": "nostr_dot_json",
+            "index_type" : "cached",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "names": {
+                      "type": "object",
+                      "properties": {},
+                      "required": []
+                    },
+                    "relays": {
+                      "type": "object",
+                      "properties": {},
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "names",
+                    "relays"
+                  ]
+            }
+        }
+    ]
+}

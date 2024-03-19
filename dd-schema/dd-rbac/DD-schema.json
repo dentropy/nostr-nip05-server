@@ -71,47 +71,27 @@
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "id": {
+                    "app_name": {
                         "type": "string"
                     },
-                    "CID": {
+                    "IPNS_name": {
                         "type": "string"
                     },
-                    "previousCID": {
+                    "role": {
                         "type": "string"
                     },
-                    "content": {
-                        "type": "object",
-                        "properties": {
-                            "app_name": {
-                                "type": "string"
-                            },
-                            "IPNS_name": {
-                                "type": "string"
-                            },
-                            "role": {
-                                "type": "string"
-                            },
-                            "permission": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "required": [
-                            "app_name",
-                            "IPNS_name",
-                            "role",
-                            "permission"
-                        ]
+                    "permission": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
-                    "id",
-                    "CID",
-                    "previousCID",
-                    "content"
+                    "app_name",
+                    "IPNS_name",
+                    "role",
+                    "permission"
                 ]
             }
         }

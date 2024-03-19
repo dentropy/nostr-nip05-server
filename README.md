@@ -19,6 +19,7 @@ deno run -A --unstable-kv --unstable-broadcast-channel ./test.js
     "schemas" : [
         {
             "schema_name" : "",
+            "index_type": "logged",
             "rxdb_json" : {}
         }
     ]

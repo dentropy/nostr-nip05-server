@@ -1,0 +1,42 @@
+{
+    "app_names": [
+        "dd20"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "nostr"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org"
+    ],
+    "schemas": [
+        {
+            "schema_name": "internet_identifiers",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "domain_name": {
+                        "type": "string"
+                    },
+                    "relay_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "username",
+                    "domain_name",
+                    "relay_list"
+                ]
+            }
+        }
+    ]
+}
