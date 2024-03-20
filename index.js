@@ -11,6 +11,9 @@ import { CID } from 'multiformats'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { code } from 'multiformats/codecs/json'
 
+import { verifyEvent } from 'nostr-tools'
+import Ajv from 'ajv'
+
 // Configure Express
 var app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -106,8 +109,84 @@ app.get('/.well-known/nostr.json', async (req, res) => {
 app.post("/napi", async function (req, res) {
     console.log("req.body for /napi")
     console.log(req.body)
+
+    // Check if nostr event is valid
+    let event_is_verified = await verifyEvent(req.body)
+    if(!event_is_verified){
+        res.send({
+            "status" : "error",
+            "error" : "Could not verify nostr event"
+        })
+        return false
+    }
+
+    // JSON.prase content form nostr event
+    let nostr_content_json = {}
+    try {
+        nostr_content_json = JSON.parse(req.body.content)
+    } catch (error) {
+        res.send({
+            "status" : "error",
+            "error" : "could not JSON.parse content of nostr event"
+        })
+        return false
+    }
+
+    // Check for DD tag
+    console.log(req.body.tags[0])
+    if (req.body.tags[0][0] != 'DD'){
+        res.send({
+            "status" : "error",
+            "error" : "event missing tag 'DD'"
+        })
+        return false
+    }
+
+    // Validate the nostr_content_json has a function_name and body
+    let dd_json_name_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Generated schema for Root",
+        "type": "object",
+        "properties": {
+          "function_name": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        },
+        "required": [
+          "function_name",
+          "body"
+        ]
+      }
+    const ajv = new Ajv()
+    const dd_json_name_schema_validator = ajv.compile(dd_json_name_schema)
+    if(!dd_json_name_schema_validator(nostr_content_json)){
+        res.send({
+            "status" : "error",
+            "error" : `stringified JSON in content of event does not follow this JSON schema ${dd_json_name_schema}`
+        })
+        return false
+    }
+
+    // Series of if statments, with role validation, and actual function logic
+    if(nostr_content_json.function_name == "upsert_data"){
+        // Role validation
+
+        // Check is root
+        console.log()
+        MyDDSchema.rxdb[ddroot["dd-rbac.user_to_role"]].find()
+
+        // Acutal Function Logic
+
+    }
+
     res.send({
-        "key" : "value"
+        "status" : "error",
+        "error" : `function_name does not exist or could not be run properly`
     })
     return true
 })
