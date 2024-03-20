@@ -10,6 +10,12 @@ import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBDevModePlugin);
 
+import { encode, decode } from '@ipld/dag-json'
+import { CID } from 'multiformats'
+import { sha256 } from 'multiformats/hashes/sha2'
+import { code } from 'multiformats/codecs/json'
+
+
 let DDSchema = {}
 // Consolodate all dependencies into single JSON object
 DDSchema.specification = JSON.parse(fs.readFileSync('./dd-schema/DD-schema.json'));
@@ -138,25 +144,27 @@ async function setup_schema() {
   // Check if every dependency is included in the root schema
 
 
-  // For now just add the root data
-  let upsert = await DDSchema.rxdb.ddroot.upsert({
-    id: "root",
-    CID: "CID_TODO",
-    previousCID: "CID_TODO",
-    content: {
-      initialized: true,
-      app_ipns_lookup: {}
-    }
-  });
-
 
   // console.log(JSON.stringify(DDSchema.specification, null, 2))
 
 
   // Create all IPNS directories
-  console.log(Object.keys(DDSchema.specification.schemas))
+  
+  // console.log(Object.keys(DDSchema.specification.schemas))
+  
+  // Get root data to save updated IPNS name to root
+  let rootData = {
+    id: "root",
+    CID: "CID_TODO",
+    previousCID: "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey",
+    content: {
+      initialized: true,
+      app_ipns_lookup: {}
+    }
+  }
+  
   for (let tmp_schema of DDSchema.specification.schemas) {
-    console.log(tmp_schema.schema_name)
+    console.log(`Schema Name ${tmp_schema.schema_name}`)
     let tmp_properties = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.properties))
     let tmp_required = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.required))
     if (tmp_schema.index_type == "logged") {
@@ -198,8 +206,8 @@ async function setup_schema() {
       console.log("\n")
       console.log("IPNS_KEY")
       console.log(ikeys.base36.substring(7))
-      console.log(tmp_schema.schema_name)
-      console.log(tmp_schema.rxdb_json)
+      // console.log(tmp_schema.schema_name)
+      // console.log(tmp_schema.rxdb_json)
       var data = {
         ipns: ikeys.base36.substring(7),
         private_key: ikeys.privateKey,
@@ -210,10 +218,6 @@ async function setup_schema() {
       // Save IPNS name to ipns_store
       await DDSchema.rxdb.ipns_store.upsert(data);
 
-      // Get root data to save updated IPNS name to root
-      let rootData = await DDSchema.rxdb.ddroot.find().where("id").equals("root").exec();
-      rootData = rootData[0]._data
-      rootData = JSON.parse(JSON.stringify(rootData))
       rootData.content.app_ipns_lookup[tmp_schema.schema_name] = ikeys.base36.substring(7)
 
       // Add schema
@@ -221,12 +225,13 @@ async function setup_schema() {
       collection_schema[ikeys.base36.substring(7)] = {
         schema: tmp_schema.rxdb_json
       }
-      DDSchema.rxdb.addCollections(collection_schema)
+      await DDSchema.rxdb.addCollections(collection_schema)
 
-      // Upsert root data
-      await DDSchema.rxdb.ddroot.upsert(rootData);
     }
   }
+  // Upsert root data
+  rootData.CID = String(CID.create(1, code, await sha256.digest(encode( rootData.content ))))
+  await DDSchema.rxdb.ddroot.upsert(rootData);
   console.log("schema setup complete")
   return DDSchema
 }

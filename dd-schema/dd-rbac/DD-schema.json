@@ -18,41 +18,20 @@
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "maxLength" : 128
-                    },
-                    "CID": {
+                    "user_did": {
                         "type": "string"
                     },
-                    "previousCID": {
+                    "user_multicodec": {
                         "type": "string"
                     },
-                    "content": {
-                        "type": "object",
-                        "properties": {
-                            "user_did": {
-                                "type": "string"
-                            },
-                            "user_multicodec": {
-                                "type": "string"
-                            },
-                            "role": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "user_did",
-                            "user_multicodec",
-                            "role"
-                        ]
+                    "role": {
+                        "type": "string"
                     }
                 },
                 "required": [
-                    "id",
-                    "CID",
-                    "previousCID",
-                    "content"
+                    "user_did",
+                    "user_multicodec",
+                    "role"
                 ]
             }
         },
