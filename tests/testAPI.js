@@ -35,7 +35,7 @@ describe('Array', async function () {
                 "id": "test@example.com",
                 "username": "test",
                 "public_key" : public_key,
-                "domain_name": "test.com",
+                "domain_name": "example.com",
                 "relay_list": ["ws://ddaemon.org"]
               }
             }
@@ -90,7 +90,7 @@ describe('Array', async function () {
           body: JSON.stringify(signedEvent)
         })
         fetch_response = await fetch_response.json()
-        // console.log(fetch_response)
+        console.log(JSON.stringify(fetch_response, null, 2))
         assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
       } catch (error) {
         assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
@@ -202,7 +202,7 @@ describe('Array', async function () {
           body: JSON.stringify(signedEvent)
         })
         fetch_response = await fetch_response.json()
-        console.log(fetch_response)
+        console.log(JSON.stringify(fetch_response, null, 2))
         assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
       } catch (error) {
         assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)

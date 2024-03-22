@@ -1,7 +1,7 @@
 import express from 'express';
 
 import DDSchema from './dd-schema/index.js'
-
+import { dd_upsert } from './dd-schema/index.js'
 import bs58 from 'bs58'
 import { decode } from "nostr-tools/nip19"
 
@@ -418,14 +418,21 @@ app.post("/napi", async function (req, res) {
                     query = await MyDDSchema.
                         rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.internet_identifiers"]].
                         find({
-                            selector: {
-                                "content.domain_name": nostr_content_json.body.domain_name
+                            // "content.domain_name": undefined// nostr_content_json.body.dns_name
+                            "selector": {
+                                "id" : {
+                                    $regex : `.@${nostr_content_json.body.dns_name}`
+                                }
                             }
                         }).exec()
                     let tmp_nostr_dot_json = {
                         "names": {},
                         "relays": {}
                     }
+                    console.log("query_shoult_not_be_zero")
+                    console.log(Object.keys(query))
+                    console.log(Object.keys(query[0]))
+                    console.log(query[0]._data)
                     for (const tmp_internet_identifier of query) {
                         console.log("tmp_internet_identifier")
                         console.log(Object.keys(tmp_internet_identifier))
@@ -434,61 +441,38 @@ app.post("/napi", async function (req, res) {
                         tmp_nostr_dot_json.relays[tmp_internet_identifier._data.public_key] = tmp_internet_identifier._data.relay_list
                     }
                     // Save nostr.json
-                    query = await MyDDSchema.
-                        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
-                        find({
-                            selector: {
-                                "content.id": nostr_content_json.body.domain_name
+                    console.log("nostr_content_json.body.domain_name 123")
+                    console.log(nostr_content_json.body)
+                    try {
+                        console.log("Do_we_do_the_dd_upsert")
+                        let return_status = await dd_upsert(
+                            MyDDSchema,
+                            ddroot,
+                            "nostr-nip05-server.nip05.raw_nostr_dot_json",
+                            {
+                                id: nostr_content_json.body.dns_name,
+                                nostr_dot_json_stringified: JSON.stringify(tmp_nostr_dot_json)
                             }
-                        }).exec()
-                    if (query.length == 0) {
-                        console.log("I_AM_HERE")
-                        let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
-                        if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
-                            console.log("LOGIGNG_ONCE_AGAIN")
-                            const query_check = await MyDDSchema.rxdb["nostr-nip05-server.nip05.raw_nostr_dot_json"]
-                                .findOne({
-                                    selector: {
-                                        "content.id": nostr_content_json.body.domain_name
-                                    }
-                                })
-                            console.log("query_check logged upsert")
-                            console.log(Object.keys(query_check))
-                            console.log(query_check._result)
-                            if (query_check._result != null) {
-                                res.send({
-                                    "status": "error",
-                                    "error": `Still need to impliment the CID stuff`
-                                })
-                                return false
-                            }
-                        }
-                        let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
-                        let tmp_upsert_data = {
-                            id: nostr_content_json.body.query_data.id,
-                            CID: CID_code,
-                            previousCID: previousCID,
-                            content: nostr_content_json.body.query_data
-                        }
-                        await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
-                            tmp_upsert_data
                         )
-                        const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
-                        console.log("query_check_100")
-                        console.log(query_check)
+                        console.log("return_status")
+                        console.log(Object.keys(return_status))
+                        console.log("\n\n\n")
+                        res.send(return_status)
+                    } catch (error) {
+                        res.send({
+                            "status": "error",
+                            "error": `dd_upsert failed\n${error}`
+                        })
+                        return false
                     }
-                    res.send({
-                        "status": "success",
-                        "success": "Now loop through and generate the nostr.json",
-                        "data": query,
-                        "nostr_dot_json": tmp_nostr_dot_json
-                    })
+                    // res.send({
+                    //     "status": "success",
+                    //     "success": ""
+                    // })
                     return true
                 } catch (error) {
                     res.send({
                         "status": "error",
-                        "success": "Failed to find internet identifiers for nostr_dot_json",
-                        "data": query,
                         "error": error
                     })
                     return true

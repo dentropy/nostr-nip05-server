@@ -149,9 +149,9 @@ async function setup_schema() {
 
 
   // Create all IPNS directories
-  
+
   // console.log(Object.keys(DDSchema.specification.schemas))
-  
+
   // Get root data to save updated IPNS name to root
   let rootData = {
     id: "root",
@@ -162,7 +162,7 @@ async function setup_schema() {
       app_ipns_lookup: {}
     }
   }
-  
+
   for (let tmp_schema of DDSchema.specification.schemas) {
     console.log(`Schema Name ${tmp_schema.schema_name}`)
     let tmp_properties = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.properties))
@@ -230,11 +230,11 @@ async function setup_schema() {
     }
   }
   // Upsert root data
-  rootData.CID = String(CID.create(1, code, await sha256.digest(encode( rootData.content ))))
+  rootData.CID = String(CID.create(1, code, await sha256.digest(encode(rootData.content))))
   await DDSchema.rxdb.ddroot.upsert(rootData);
   console.log("schema setup complete")
   DDSchema.schemas = {}
-  for (const schema of DDSchema.specification.schemas){
+  for (const schema of DDSchema.specification.schemas) {
     DDSchema.schemas[schema.schema_name] = schema
   }
   return DDSchema
@@ -262,7 +262,38 @@ export default async function init() {
   }
 }
 
+export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
+  let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
+  let query_ipns = ddroot[0]._data.content.app_ipns_lookup[query_name]
+  if (MyDDSchema.schemas[query_name].index_type == "logged") {
+    console.log("LOGIGNG_ONCE_AGAIN")
+    const query_check = await MyDDSchema.rxdb[query_ipns]
+      .findOne({
+        selector: {
+          "id": query_data.id
+        }
+      })
+    if (query_check._result != null) {
+      previousCID = query_check[0]._data.id
+    }
+  }
+  console.log("query_data")
+  console.log(query_data)
+  let CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+  let tmp_upsert_data = {
+    id: query_data.id,
+    CID: CID_code,
+    previousCID: previousCID,
+    content: query_data
+  }
+  const query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
+  return {
+    "status": "success",
+    "success": "Seems to have inserted",
+    "query_check": query_check
+  }
 
+}
 
 
 // const myDocument = await myRxDatabase.dd.upsert({
