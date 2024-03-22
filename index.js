@@ -100,10 +100,31 @@ app.get('/', (req, res) => {
 
 
 app.get('/.well-known/nostr.json', async (req, res) => {
-    res.send({
-        "key": "value"
-    })
-    return true
+    // Get the first domain name from nip05
+    let query = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
+        find({
+            "selector": {
+                "content.key" : "generate_nostr_dot_json" 
+            }
+        }).exec()
+    if(query.length > 0) {
+        let nostr_dot_json_query = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
+        find({
+            "selector": {
+                "id" : query[0]._data.content.domain_name
+            }
+        }).exec()
+        res.send(JSON.parse(nostr_dot_json_query[0]._data.content.nostr_dot_json_stringified))        
+        return true
+    } else {
+        res.send({
+            "status": "error",
+            "error": "no nostr.json files configured"
+        })
+        return true
+    }
 });
 
 
@@ -173,12 +194,9 @@ app.post("/napi", async function (req, res) {
         return false
     }
 
-    // Series of if statments, with role validation, and actual function logic
-    console.log("\n\n\n")
-    console.log("nostr_content_json")
-    console.log(nostr_content_json)
-    console.log(nostr_content_json.function_name == "upsert_data")
 
+
+    // Series of if statments, with role validation, and actual function logic
     if (nostr_content_json.function_name == "upsert_data") {
         // Role validation
         let nostr_base58 = await bs58.encode(await text_encoder.encode(req.body.pubkey))
@@ -235,41 +253,42 @@ app.post("/napi", async function (req, res) {
         }
         // Perform the actual upsert
         try {
-            // Find first
-            let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
-            if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
-                const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]]
-                    .findOne({
-                        selector: {
-                            id: nostr_content_json.body.query_data.id
-                        }
-                    })
-                console.log("query_check logged upsert")
-                console.log(Object.keys(query_check))
-                console.log(query_check._result)
-                if (query_check._result != null) {
-                    res.send({
-                        "status": "error",
-                        "error": `Still need to impliment the CID stuff`
-                    })
-                    return false
-                }
-            }
-            let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
-            let tmp_upsert_data = {
-                id: nostr_content_json.body.query_data.id,
-                CID: CID_code,
-                previousCID: previousCID,
-                content: nostr_content_json.body.query_data
-            }
-            console.log("tmp_upsert_data")
-            console.log(JSON.stringify(tmp_upsert_data, null, 2))
-            await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
-                tmp_upsert_data
+            // Find if data already in database
+            let query_check = dd_upsert(
+                MyDDSchema,
+                ddroot,
+                nostr_content_json.body.query_name,
+                nostr_content_json.body.query_data
             )
-            const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
-            console.log("query_check NOT logged upsert")
-            console.log(Object.keys(query_check))
+            // let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
+            // let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
+            // if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
+            //     const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]]
+            //         .findOne({
+            //             selector: {
+            //                 id: nostr_content_json.body.query_data.id
+            //             }
+            //         })
+            //     if (query_check._result != null) {
+            //         res.send({
+            //             "status": "error",
+            //             "error": `Still need to impliment the CID stuff`
+            //         })
+            //         return false
+            //     }
+            // }
+            // let tmp_upsert_data = {
+            //     id: nostr_content_json.body.query_data.id,
+            //     CID: CID_code,
+            //     previousCID: previousCID,
+            //     content: nostr_content_json.body.query_data
+            // }
+            // await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
+            //     tmp_upsert_data
+            // )
+            // const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
+            // console.log("query_check NOT logged upsert")
+            // console.log(Object.keys(query_check))
             res.send({
                 "status": "success",
                 "success": `here is query_check\n${JSON.stringify(query_check, null, 2)}`
@@ -278,7 +297,7 @@ app.post("/napi", async function (req, res) {
         } catch (error) {
             res.send({
                 "status": "error",
-                "error": `function upsert_data ran but is not yet implimented\n${error}`
+                "error": `upsert error\n${error}`
             })
             return true
         }
@@ -400,8 +419,6 @@ app.post("/napi", async function (req, res) {
         }
         // Check if we have the nip05 to generate nostr.json
         try {
-            console.log("nostr_content_json.body.query_name")
-            console.log(nostr_content_json.body.query_name)
 
             let query = await MyDDSchema.
                 rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
@@ -413,15 +430,15 @@ app.post("/napi", async function (req, res) {
             // Now loop through and generate the nostr.json
             console.log("MAH_QUERY_HERE")
             console.log(query[0]._data)
-            if (query[0]._data.key == "generate_nostr_dot_json") {
+            if (query[0]._data.content.key == "generate_nostr_dot_json") {
                 try {
                     query = await MyDDSchema.
                         rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.internet_identifiers"]].
                         find({
                             // "content.domain_name": undefined// nostr_content_json.body.dns_name
                             "selector": {
-                                "id" : {
-                                    $regex : `.@${nostr_content_json.body.dns_name}`
+                                "id": {
+                                    $regex: `.@${nostr_content_json.body.dns_name}`
                                 }
                             }
                         }).exec()
@@ -437,12 +454,14 @@ app.post("/napi", async function (req, res) {
                         console.log("tmp_internet_identifier")
                         console.log(Object.keys(tmp_internet_identifier))
                         console.log(tmp_internet_identifier._data)
-                        tmp_nostr_dot_json.names[tmp_internet_identifier._data.username] = tmp_internet_identifier._data.public_key
-                        tmp_nostr_dot_json.relays[tmp_internet_identifier._data.public_key] = tmp_internet_identifier._data.relay_list
+                        tmp_nostr_dot_json.names[tmp_internet_identifier._data.content.username] = tmp_internet_identifier._data.content.public_key
+                        tmp_nostr_dot_json.relays[tmp_internet_identifier._data.content.public_key] = tmp_internet_identifier._data.content.relay_list
                     }
                     // Save nostr.json
                     console.log("nostr_content_json.body.domain_name 123")
                     console.log(nostr_content_json.body)
+                    console.log("tmp_nostr_dot_json123")
+                    console.log(tmp_nostr_dot_json)
                     try {
                         console.log("Do_we_do_the_dd_upsert")
                         let return_status = await dd_upsert(

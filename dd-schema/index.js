@@ -265,9 +265,10 @@ export default async function init() {
 export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
   let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
   let query_ipns = ddroot[0]._data.content.app_ipns_lookup[query_name]
+  let query_check = null
   if (MyDDSchema.schemas[query_name].index_type == "logged") {
     console.log("LOGIGNG_ONCE_AGAIN")
-    const query_check = await MyDDSchema.rxdb[query_ipns]
+    query_check = await MyDDSchema.rxdb[query_ipns]
       .findOne({
         selector: {
           "id": query_data.id
@@ -286,7 +287,7 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     previousCID: previousCID,
     content: query_data
   }
-  const query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
+  query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
   return {
     "status": "success",
     "success": "Seems to have inserted",

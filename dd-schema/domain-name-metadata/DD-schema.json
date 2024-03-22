@@ -21,6 +21,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "domain_name": {
+                        "type": "string"
+                    },
                     "key": {
                         "type": "string"
                     },
