@@ -191,7 +191,7 @@ describe('Array', async function () {
           JSON.stringify({
             "function_name": "generate_nostr_dot_json",
             "body": {
-              "dns_name": "example.com"
+              "domain_name": "example.com"
             }
           }),
       }, secret_key)
@@ -229,7 +229,7 @@ describe('Array', async function () {
               "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
               "query_data": {
                 "selector": {
-                  "id" : "example.com"
+                  "content.domain_name" : "example.com"
                 }
               }
             }
@@ -245,8 +245,8 @@ describe('Array', async function () {
           body: JSON.stringify(signedEvent)
         })
         fetch_response = await fetch_response.json()
-        console.log("fetch nostr-nip05-server.domain-name-metadata.domain_name_kv")
-        console.log(JSON.stringify(fetch_response, null, 2))
+        // console.log("fetch nostr-nip05-server.domain-name-metadata.domain_name_kv")
+        // console.log(JSON.stringify(fetch_response, null, 2))
         assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
       } catch (error) {
         assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)

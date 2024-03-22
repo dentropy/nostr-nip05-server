@@ -116,6 +116,14 @@ app.get('/.well-known/nostr.json', async (req, res) => {
                 "id" : query[0]._data.content.domain_name
             }
         }).exec()
+        if(nostr_dot_json_query.length == 0) {
+            res.send({
+                "status" : "error",
+                "error" : "nostr_dot_json_query did not return anything"
+            })        
+            return true
+        }
+        console.log(nostr_dot_json_query[0])
         res.send(JSON.parse(nostr_dot_json_query[0]._data.content.nostr_dot_json_stringified))        
         return true
     } else {
@@ -402,12 +410,12 @@ app.post("/napi", async function (req, res) {
             "title": "Generated schema for Root",
             "type": "object",
             "properties": {
-                "dns_name": {
+                "domain_name": {
                     "type": "string"
                 }
             },
             "required": [
-                "dns_name"
+                "domain_name"
             ]
         })
         if (!usert_data_json_schema(nostr_content_json.body)) {
@@ -424,15 +432,17 @@ app.post("/napi", async function (req, res) {
                 rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
                 find({
                     selector: {
-                        id: nostr_content_json.body.domain_name
+                        "content.domain_name" : nostr_content_json.body.domain_name
                     }
                 }).exec()
             // Now loop through and generate the nostr.json
             console.log("WE_LOG_HERE")
+            console.log(nostr_content_json.body.domain_name)
             console.log(Object.keys(query))
             if(query.length == 0){
                 res.send({
                     "status": "error",
+                    "descripiton" : "WE_LOG_HERE Could not find anything",
                     "error": `Could not find anything for dns=${nostr_content_json.body.domain_name}`
                 })
                 return true
@@ -444,8 +454,9 @@ app.post("/napi", async function (req, res) {
                         find({
                             // "content.domain_name": undefined// nostr_content_json.body.dns_name
                             "selector": {
+                                //"content.domain_name" : nostr_content_json.body.domain_name
                                 "id": {
-                                    $regex: `.@${nostr_content_json.body.dns_name}`
+                                    $regex: `.@${nostr_content_json.body.domain_name}`
                                 }
                             }
                         }).exec()
@@ -453,22 +464,18 @@ app.post("/napi", async function (req, res) {
                         "names": {},
                         "relays": {}
                     }
-                    console.log("query_shoult_not_be_zero")
-                    console.log(Object.keys(query))
-                    console.log(Object.keys(query[0]))
-                    console.log(query[0]._data)
+                    if(query.length == 0){
+                        res.send({
+                            "status": "error",
+                            "error": `Could not query for nostr-nip05-server.nip05.internet_identifiers`
+                        })
+                        return false
+                    }
                     for (const tmp_internet_identifier of query) {
-                        console.log("tmp_internet_identifier")
-                        console.log(Object.keys(tmp_internet_identifier))
-                        console.log(tmp_internet_identifier._data)
                         tmp_nostr_dot_json.names[tmp_internet_identifier._data.content.username] = tmp_internet_identifier._data.content.public_key
                         tmp_nostr_dot_json.relays[tmp_internet_identifier._data.content.public_key] = tmp_internet_identifier._data.content.relay_list
                     }
                     // Save nostr.json
-                    console.log("nostr_content_json.body.domain_name 123")
-                    console.log(nostr_content_json.body)
-                    console.log("tmp_nostr_dot_json123")
-                    console.log(tmp_nostr_dot_json)
                     try {
                         console.log("Do_we_do_the_dd_upsert")
                         let return_status = await dd_upsert(
@@ -476,14 +483,12 @@ app.post("/napi", async function (req, res) {
                             ddroot,
                             "nostr-nip05-server.nip05.raw_nostr_dot_json",
                             {
-                                id: nostr_content_json.body.dns_name,
+                                id: nostr_content_json.body.domain_name,
                                 nostr_dot_json_stringified: JSON.stringify(tmp_nostr_dot_json)
                             }
                         )
-                        console.log("return_status")
-                        console.log(Object.keys(return_status))
-                        console.log("\n\n\n")
                         res.send(return_status)
+                        return true
                     } catch (error) {
                         res.send({
                             "status": "error",
@@ -491,14 +496,10 @@ app.post("/napi", async function (req, res) {
                         })
                         return false
                     }
-                    // res.send({
-                    //     "status": "success",
-                    //     "success": ""
-                    // })
-                    return true
                 } catch (error) {
                     res.send({
                         "status": "error",
+                        "description" : "Could not update domain name",
                         "error": error
                     })
                     return true
