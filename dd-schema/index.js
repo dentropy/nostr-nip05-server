@@ -195,7 +195,7 @@ async function setup_schema() {
           "previousCID",
           "content"
         ]
-        console.log("GOT EM")
+        console.log("GOT_EM")
         console.log(tmp_schema.rxdb_json)
       } catch (error) {
         console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)

@@ -24,7 +24,7 @@ let ddroot = {}
 const text_encoder = new TextEncoder()
 async function setup() {
     // Check if admin key is loaded from dotenv
-    console.log(Deno.env)
+    // console.log(Deno.env)
     if (!Deno.env.has("NOSTR_ROOT_PUBLIC_KEY")) {
         throw new Error('You need to set NOSTR_ROOT_PUBLIC_KEY environment variable or use .env file');
     }
@@ -40,7 +40,7 @@ async function setup() {
     }).exec();
 
 
-    console.log(ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"])
+    // console.log(ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"])
 
     let decoded_npub = decode(Deno.env.get("NOSTR_ROOT_PUBLIC_KEY"))
     console.log("decoded_npub")
@@ -58,8 +58,8 @@ async function setup() {
     console.log("\n\n")
     console.log("HELLOW WORLD")
     // console.log(ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"])
-    console.log(MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]])
-    console.log(Object.keys(MyDDSchema.rxdb.collections))
+    // console.log(MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]])
+    // console.log(Object.keys(MyDDSchema.rxdb.collections))
     let check_RBAC = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]].find({
         selector: {
             content: {
@@ -256,13 +256,16 @@ app.post("/napi", async function (req, res) {
                 }
             }
             let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
+            let tmp_upsert_data = {
+                id: nostr_content_json.body.query_data.id,
+                CID: CID_code,
+                previousCID: previousCID,
+                content: nostr_content_json.body.query_data
+            }
+            console.log("tmp_upsert_data")
+            console.log(JSON.stringify(tmp_upsert_data, null, 2))
             await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
-                {
-                    id: nostr_content_json.body.query_data.id,
-                    CID: CID_code,
-                    previousCID: previousCID,
-                    content: nostr_content_json.body.query_data
-                }
+                tmp_upsert_data
             )
             const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
             console.log("query_check NOT logged upsert")
@@ -408,7 +411,7 @@ app.post("/napi", async function (req, res) {
                     }
                 }).exec()
             // Now loop through and generate the nostr.json
-            console.log("query[0]")
+            console.log("MAH_QUERY_HERE")
             console.log(query[0]._data)
             if (query[0]._data.key == "generate_nostr_dot_json") {
                 try {
@@ -423,19 +426,62 @@ app.post("/napi", async function (req, res) {
                         "names": {},
                         "relays": {}
                     }
-                    console.log(Object.keys(query))
                     for (const tmp_internet_identifier of query) {
                         console.log("tmp_internet_identifier")
                         console.log(Object.keys(tmp_internet_identifier))
                         console.log(tmp_internet_identifier._data)
-                        // tmp_nostr_dot_json.names[tmp_internet_identifier._data.content.username] = "TODO"
-                        // tmp_nostr_dot_json.relays["TODO"] = tmp_internet_identifier._data.content.relay_list
+                        tmp_nostr_dot_json.names[tmp_internet_identifier._data.username] = tmp_internet_identifier._data.public_key
+                        tmp_nostr_dot_json.relays[tmp_internet_identifier._data.public_key] = tmp_internet_identifier._data.relay_list
+                    }
+                    // Save nostr.json
+                    query = await MyDDSchema.
+                        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
+                        find({
+                            selector: {
+                                "content.id": nostr_content_json.body.domain_name
+                            }
+                        }).exec()
+                    if (query.length == 0) {
+                        console.log("I_AM_HERE")
+                        let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
+                        if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
+                            console.log("LOGIGNG_ONCE_AGAIN")
+                            const query_check = await MyDDSchema.rxdb["nostr-nip05-server.nip05.raw_nostr_dot_json"]
+                                .findOne({
+                                    selector: {
+                                        "content.id": nostr_content_json.body.domain_name
+                                    }
+                                })
+                            console.log("query_check logged upsert")
+                            console.log(Object.keys(query_check))
+                            console.log(query_check._result)
+                            if (query_check._result != null) {
+                                res.send({
+                                    "status": "error",
+                                    "error": `Still need to impliment the CID stuff`
+                                })
+                                return false
+                            }
+                        }
+                        let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
+                        let tmp_upsert_data = {
+                            id: nostr_content_json.body.query_data.id,
+                            CID: CID_code,
+                            previousCID: previousCID,
+                            content: nostr_content_json.body.query_data
+                        }
+                        await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
+                            tmp_upsert_data
+                        )
+                        const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
+                        console.log("query_check_100")
+                        console.log(query_check)
                     }
                     res.send({
                         "status": "success",
                         "success": "Now loop through and generate the nostr.json",
                         "data": query,
-                        "nostr_dot_json" : tmp_nostr_dot_json
+                        "nostr_dot_json": tmp_nostr_dot_json
                     })
                     return true
                 } catch (error) {
@@ -443,7 +489,7 @@ app.post("/napi", async function (req, res) {
                         "status": "error",
                         "success": "Failed to find internet identifiers for nostr_dot_json",
                         "data": query,
-                        "error" : error
+                        "error": error
                     })
                     return true
                 }
@@ -458,7 +504,7 @@ app.post("/napi", async function (req, res) {
         } catch (error) {
             res.send({
                 "status": "error",
-                "error": `Could not execute the rxdb query sucessfully, did you forget the selector?\n${error}\n${JSON.stringify(error)}`
+                "error": `Second Could not execute the rxdb query sucessfully, did you forget the selector?\n${error}\n${JSON.stringify(error)}`
             })
             return false
         }
