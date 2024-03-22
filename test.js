@@ -46,7 +46,11 @@ const DDSchema = {
       maxLength: 100
     },
     content: {
-      type: 'object'
+      type: 'object',
+      name: {
+        type: 'string',
+        maxLength: 100
+      }
     }
   },
   required: ['id', 'CID', 'previousCID', 'content']
@@ -74,8 +78,8 @@ await myRxDatabase.addCollections({
   dd: {
     schema: DDSchema
   },
-  cid_store : {
-    schema : CIDStoreSchema
+  cid_store: {
+    schema: CIDStoreSchema
   }
 });
 console.log(Object.keys(myRxDatabase.collections))
@@ -86,7 +90,7 @@ const myDocument = await myRxDatabase.dd.upsert({
   CID: 'TODO',
   previousCID: "TODO",
   content: {
-    timestamp_ms: new Date()
+    name: "Dave"
   }
 });
 
@@ -103,8 +107,42 @@ const foundDocuments = await myRxDatabase.dd.find({
 console.log("\n")
 console.log("foundDocuments")
 console.log(Object.keys(foundDocuments[0]._data))
+console.log(foundDocuments[0]._data)
 
 
+const foundDocuments2 = await myRxDatabase.dd.find({
+  selector: {
+    content : {
+      $eq : {
+        name : "Dave"
+      }
+    }
+  }
+}).exec();
+
+console.log("\n")
+console.log("foundDocuments2")
+if (foundDocuments2.length != 0) {
+  console.log(foundDocuments2[0]._data)
+  console.log(Object.keys(foundDocuments2[0]._data))
+}
+
+
+const foundDocuments3 = await myRxDatabase.dd.find({
+  selector: {
+    "content.name" : "Dave"
+  }
+}).exec();
+
+console.log("\n")
+console.log("foundDocuments3")
+if (foundDocuments3.length != 0) {
+  console.log(foundDocuments3[0]._data)
+  console.log(Object.keys(foundDocuments3[0]._data))
+}
+
+
+console.log("\n\n")
 console.log("List Collections")
 console.log(
   Object.keys(myRxDatabase.collections)
