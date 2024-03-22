@@ -233,6 +233,10 @@ async function setup_schema() {
   rootData.CID = String(CID.create(1, code, await sha256.digest(encode( rootData.content ))))
   await DDSchema.rxdb.ddroot.upsert(rootData);
   console.log("schema setup complete")
+  DDSchema.schemas = {}
+  for (const schema of DDSchema.specification.schemas){
+    DDSchema.schemas[schema.schema_name] = schema
+  }
   return DDSchema
 }
 
