@@ -34,7 +34,7 @@ describe('Array', async function () {
               "query_data": {
                 "id": "test@example.com",
                 "username": "test",
-                "public_key": public_key,
+                "public_key": public_key2,
                 "domain_name": "example.com",
                 "relay_list": ["ws://ddaemon.org"]
               }
@@ -304,11 +304,90 @@ describe('Array', async function () {
       assert.equal(Object.keys(fetch_response).includes("relays"), true, `key relays missing from nostr.json`)
       assert.equal(Object.keys(fetch_response.relays).length >= 1, true, `no relays in nostr.json`)
     });
-    // TODO
+
+
+    it('upsert_nip05 as nip05 owner NOT ROOT', async function () {
+      let signedEvent = finalizeEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['DD']
+        ],
+        content:
+          JSON.stringify({
+            "function_name": "upsert_nip05",
+            "body": {
+              "internet_identifier": "test@example.com",
+              "public_key": public_key2,
+              "relay_list": ["ws://ddaemon.org", "wss://nostr.net"]
+            }
+          }),
+      }, secret_key2)
+      assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+      try {
+        let fetch_response = await fetch("http://localhost:8081/napi", {
+          "method": "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signedEvent)
+        })
+        fetch_response = await fetch_response.json()
+        // console.log(fetch_response)
+        assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+      } catch (error) {
+        assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+      }
+      assert.equal([1, 2, 3].indexOf(4), -1);
+    });
+
+
+    it('find_query check nip05 actually updated', async function () {
+      let signedEvent = finalizeEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['DD']
+        ],
+        content:
+          JSON.stringify({
+            "function_name": "find_query",
+            "body": {
+              "query_name": "nostr-nip05-server.nip05.internet_identifiers",
+              "query_data": {
+                "selector": {
+                  "id": "test@example.com"
+                }
+              }
+            }
+          }),
+      }, secret_key)
+      assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+      try {
+        let fetch_response = await fetch("http://localhost:8081/napi", {
+          "method": "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signedEvent)
+        })
+        fetch_response = await fetch_response.json()
+        console.log(JSON.stringify(fetch_response, null, 2))
+        assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+      } catch (error) {
+        assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+      }
+      assert.equal([1, 2, 3].indexOf(4), -1);
+    });
+
+
 
     // Test not root
     // Finish the upsert when there is something already in the database
     // Test invalid nostr JSON
+
+
+    // 
 
 
   });

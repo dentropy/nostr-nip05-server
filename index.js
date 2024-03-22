@@ -105,26 +105,26 @@ app.get('/.well-known/nostr.json', async (req, res) => {
         rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
         find({
             "selector": {
-                "content.key" : "generate_nostr_dot_json" 
+                "content.key": "generate_nostr_dot_json"
             }
         }).exec()
-    if(query.length > 0) {
+    if (query.length > 0) {
         let nostr_dot_json_query = await MyDDSchema.
-        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
-        find({
-            "selector": {
-                "id" : query[0]._data.content.domain_name
-            }
-        }).exec()
-        if(nostr_dot_json_query.length == 0) {
+            rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
+            find({
+                "selector": {
+                    "id": query[0]._data.content.domain_name
+                }
+            }).exec()
+        if (nostr_dot_json_query.length == 0) {
             res.send({
-                "status" : "error",
-                "error" : "nostr_dot_json_query did not return anything"
-            })        
+                "status": "error",
+                "error": "nostr_dot_json_query did not return anything"
+            })
             return true
         }
-        console.log(nostr_dot_json_query[0])
-        res.send(JSON.parse(nostr_dot_json_query[0]._data.content.nostr_dot_json_stringified))        
+        // console.log(nostr_dot_json_query[0])
+        res.send(JSON.parse(nostr_dot_json_query[0]._data.content.nostr_dot_json_stringified))
         return true
     } else {
         res.send({
@@ -268,35 +268,6 @@ app.post("/napi", async function (req, res) {
                 nostr_content_json.body.query_name,
                 nostr_content_json.body.query_data
             )
-            // let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
-            // let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
-            // if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
-            //     const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]]
-            //         .findOne({
-            //             selector: {
-            //                 id: nostr_content_json.body.query_data.id
-            //             }
-            //         })
-            //     if (query_check._result != null) {
-            //         res.send({
-            //             "status": "error",
-            //             "error": `Still need to impliment the CID stuff`
-            //         })
-            //         return false
-            //     }
-            // }
-            // let tmp_upsert_data = {
-            //     id: nostr_content_json.body.query_data.id,
-            //     CID: CID_code,
-            //     previousCID: previousCID,
-            //     content: nostr_content_json.body.query_data
-            // }
-            // await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
-            //     tmp_upsert_data
-            // )
-            // const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(nostr_content_json.body.query_data)
-            // console.log("query_check NOT logged upsert")
-            // console.log(Object.keys(query_check))
             res.send({
                 "status": "success",
                 "success": `here is query_check\n${JSON.stringify(query_check, null, 2)}`
@@ -432,17 +403,17 @@ app.post("/napi", async function (req, res) {
                 rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
                 find({
                     selector: {
-                        "content.domain_name" : nostr_content_json.body.domain_name
+                        "content.domain_name": nostr_content_json.body.domain_name
                     }
                 }).exec()
             // Now loop through and generate the nostr.json
             console.log("WE_LOG_HERE")
             console.log(nostr_content_json.body.domain_name)
             console.log(Object.keys(query))
-            if(query.length == 0){
+            if (query.length == 0) {
                 res.send({
                     "status": "error",
-                    "descripiton" : "WE_LOG_HERE Could not find anything",
+                    "descripiton": "WE_LOG_HERE Could not find anything",
                     "error": `Could not find anything for dns=${nostr_content_json.body.domain_name}`
                 })
                 return true
@@ -464,7 +435,7 @@ app.post("/napi", async function (req, res) {
                         "names": {},
                         "relays": {}
                     }
-                    if(query.length == 0){
+                    if (query.length == 0) {
                         res.send({
                             "status": "error",
                             "error": `Could not query for nostr-nip05-server.nip05.internet_identifiers`
@@ -499,7 +470,7 @@ app.post("/napi", async function (req, res) {
                 } catch (error) {
                     res.send({
                         "status": "error",
-                        "description" : "Could not update domain name",
+                        "description": "Could not update domain name",
                         "error": error
                     })
                     return true
@@ -521,6 +492,127 @@ app.post("/napi", async function (req, res) {
         }
     }
 
+
+    if (nostr_content_json.function_name == "upsert_nip05") {
+        // Validate the query_data
+        var ajv = new Ajv()
+        var usert_data_json_schema = ajv.compile({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "title": "Generated schema for Root",
+            "type": "object",
+            "properties": {
+                "internet_identifier": {
+                    "type": "string"
+                },
+                "public_key": {
+                    "type": "string"
+                },
+                "relay_list": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "internet_identifier",
+                "public_key",
+                "relay_list"
+            ]
+        })
+        if (!usert_data_json_schema(nostr_content_json.body)) {
+            res.send({
+                "status": "error",
+                "error": `function upsert_data body must be validated against the following JSON_Schema\n${JSON.stringify(usert_data_json_schema)}`
+            })
+            return false
+        }
+        // Check if internet_identifier matches with public key
+        let parsed_internet_identifier = nostr_content_json.body.internet_identifier.split('@')
+        if (parsed_internet_identifier.length != 2) {
+            res.send({
+                "status": "error",
+                "error": `Invalid internet identifier\n${JSON.stringify(nostr_content_json.body.internet_identifier)}`
+            })
+            return false
+        }
+        // Parse out name and domain name form internet identifier
+        let name = parsed_internet_identifier[0]
+        let domain_name = parsed_internet_identifier[1]
+        // Check if internet identifier is in database
+        console.log("nostr_content_json.body.intenret_identifier")
+        console.log(nostr_content_json.body.internet_identifier)
+        if(nostr_content_json.body.internet_identifier == undefined){
+            res.send({
+                "status": "error",
+                "error": `body.intenret_identifier can't be undefined`,
+                "body" : nostr_content_json.body
+            })
+            return false
+        }
+        let query = await MyDDSchema.
+            rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.internet_identifiers"]].
+            find({
+                selector: {
+                    "id": nostr_content_json.body.internet_identifier
+                }
+            }).exec()
+        if (query.length == 0) {
+            res.send({
+                "status": "error",
+                "error": `internet identifier is not in database`
+            })
+            return false
+        }
+        // Check public of nostr event matches with internet_identifier
+        console.log("Here_is_internet_identifier")
+        console.log(query[0]._data)
+        console.log(req.body.pubkey)
+        console.log(query[0]._data.content.public_key)
+        if (query[0]._data.content.public_key == req.body.pubkey) {
+            let uspert_error = null
+            try {
+                let upsert_data =                     {
+                    id : nostr_content_json.body.internet_identifier,
+                    username : name,
+                    public_key : nostr_content_json.body.public_key,
+                    domain_name :domain_name,
+                    relay_list : nostr_content_json.body.relay_list
+                }
+                // console.log("upsert_date")
+                // console.log(upsert_data)
+                uspert_error = await dd_upsert(
+                    MyDDSchema,
+                    ddroot,
+                    "nostr-nip05-server.nip05.internet_identifiers",
+                    upsert_data
+                )
+            } catch (error) {
+                res.send({
+                    "status": "error",
+                    "error": `dd_upsert failed to update nip05 internet_identifier`,
+                    "error_description": error,
+                    "uspert_error" : uspert_error
+                })
+                return true
+            }
+            res.send({
+                "status": "success",
+                "success": `Got pretty far`,
+                "data": query[0]._data
+            })
+            return true
+        } else {
+            res.send({
+                "status": "error",
+                "error": `Public key does not match`,
+                "data": query[0]._data
+            })
+            return true
+        }
+
+
+    }
 
     res.send({
         "status": "error",
