@@ -214,6 +214,48 @@ describe('Array', async function () {
     });
 
 
+
+    it('find_query nostr-nip05-server.domain-name-metadata.domain_name_k example.com', async function () {
+      let signedEvent = finalizeEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['DD']
+        ],
+        content:
+          JSON.stringify({
+            "function_name": "find_query",
+            "body": {
+              "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
+              "query_data": {
+                "selector": {
+                  "id" : "example.com"
+                }
+              }
+            }
+          }),
+      }, secret_key)
+      assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+      try {
+        let fetch_response = await fetch("http://localhost:8081/napi", {
+          "method": "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signedEvent)
+        })
+        fetch_response = await fetch_response.json()
+        console.log("fetch nostr-nip05-server.domain-name-metadata.domain_name_kv")
+        console.log(JSON.stringify(fetch_response, null, 2))
+        assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+      } catch (error) {
+        assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+      }
+      assert.equal([1, 2, 3].indexOf(4), -1);
+    });
+
+
+
     it('find_query raw_nostr_dot_json', async function () {
       let signedEvent = finalizeEvent({
         kind: 1,

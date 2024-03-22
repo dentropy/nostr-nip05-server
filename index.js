@@ -428,8 +428,15 @@ app.post("/napi", async function (req, res) {
                     }
                 }).exec()
             // Now loop through and generate the nostr.json
-            console.log("MAH_QUERY_HERE")
-            console.log(query[0]._data)
+            console.log("WE_LOG_HERE")
+            console.log(Object.keys(query))
+            if(query.length == 0){
+                res.send({
+                    "status": "error",
+                    "error": `Could not find anything for dns=${nostr_content_json.body.domain_name}`
+                })
+                return true
+            }
             if (query[0]._data.content.key == "generate_nostr_dot_json") {
                 try {
                     query = await MyDDSchema.
