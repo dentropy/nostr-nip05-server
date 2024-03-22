@@ -1,0 +1,39 @@
+{
+    "app_names": [
+        "domain-name-metadata"
+    ],
+    "app_version": "0.0.1",
+    "tags": [
+        "nostr"
+    ],
+    "authors": [
+        "dentropy@ddaemon.org"
+    ],
+    "schemas": [
+        {
+            "schema_name": "domain_name_kv",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "domain_name",
+                    "key",
+                    "value"
+                ]
+            }
+        }
+    ]
+}

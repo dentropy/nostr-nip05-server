@@ -199,8 +199,7 @@ app.post("/napi", async function (req, res) {
             })
         }
         // Acutal Function Logic
-        var ajv = new Ajv()
-        var usert_data_json_schema = ajv.compile({
+        let tmp_json_schema = {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "title": "Generated schema for Root",
             "type": "object",
@@ -224,11 +223,13 @@ app.post("/napi", async function (req, res) {
                 "query_name",
                 "query_data"
             ]
-        })
+        }
+        var ajv = new Ajv()
+        var usert_data_json_schema = ajv.compile(tmp_json_schema)
         if (!usert_data_json_schema(nostr_content_json.body)) {
             res.send({
                 "status": "error",
-                "error": `function upsert_data body must be validated against the following JSON_Schema\n${usert_data_json_schema}`
+                "error": `function upsert_data body must be validated against the following JSON_Schema\n${JSON.stringify(tmp_json_schema, null, 2)}`
             })
             return false
         }
@@ -237,7 +238,6 @@ app.post("/napi", async function (req, res) {
             // Find first
             let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
             if (MyDDSchema.schemas[nostr_content_json.body.query_name].index_type == "logged") {
-                console.log("in logged")
                 const query_check = await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]]
                     .findOne({
                         selector: {
@@ -255,9 +255,8 @@ app.post("/napi", async function (req, res) {
                     return false
                 }
             }
-            console.log("in not logged")
             let CID_code = await String(CID.create(1, code, await sha256.digest(encode(nostr_content_json.body.query_data))))
-            await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]].upsert(
+            await MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].upsert(
                 {
                     id: nostr_content_json.body.query_data.id,
                     CID: CID_code,
@@ -337,13 +336,125 @@ app.post("/napi", async function (req, res) {
             let query = await MyDDSchema.
                 rxdb[ddroot[0]._data.content.app_ipns_lookup[nostr_content_json.body.query_name]].
                 find(nostr_content_json.body.query_data).exec()
-        
+
             res.send({
                 "status": "success",
+                "success": "Here is the find data",
                 "data": query
             })
             return true
 
+        } catch (error) {
+            res.send({
+                "status": "error",
+                "error": `Could not execute the rxdb query sucessfully, did you forget the selector?\n${error}\n${JSON.stringify(error)}`
+            })
+            return false
+        }
+    }
+
+
+    if (nostr_content_json.function_name == "generate_nostr_dot_json") {
+        // Role validation
+        let nostr_base58 = await bs58.encode(await text_encoder.encode(req.body.pubkey))
+        let nostr_did = "did:key:" + nostr_base58
+        let check_root_role = await MyDDSchema.rxdb[
+            ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]
+        ]
+            .findOne({
+                selector: {
+                    "content.role": "root",
+                    "content.user_did": nostr_did
+                }
+            }).exec();
+        if (check_root_role._data.content.user_did != nostr_did) {
+            res.send({
+                "status": "error",
+                "error": `Failed role validation, you can't run function_name = upsert_data`
+            })
+        }
+        // Acutal Function Logic
+        var ajv = new Ajv()
+        var usert_data_json_schema = ajv.compile({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "title": "Generated schema for Root",
+            "type": "object",
+            "properties": {
+                "dns_name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "dns_name"
+            ]
+        })
+        if (!usert_data_json_schema(nostr_content_json.body)) {
+            res.send({
+                "status": "error",
+                "error": `function upsert_data body must be validated against the following JSON_Schema\n${JSON.stringify(usert_data_json_schema)}`
+            })
+            return false
+        }
+        // Check if we have the nip05 to generate nostr.json
+        try {
+            console.log("nostr_content_json.body.query_name")
+            console.log(nostr_content_json.body.query_name)
+
+            let query = await MyDDSchema.
+                rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
+                find({
+                    selector: {
+                        id: nostr_content_json.body.domain_name
+                    }
+                }).exec()
+            // Now loop through and generate the nostr.json
+            console.log("query[0]")
+            console.log(query[0]._data)
+            if (query[0]._data.key == "generate_nostr_dot_json") {
+                try {
+                    query = await MyDDSchema.
+                        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.internet_identifiers"]].
+                        find({
+                            selector: {
+                                "content.domain_name": nostr_content_json.body.domain_name
+                            }
+                        }).exec()
+                    let tmp_nostr_dot_json = {
+                        "names": {},
+                        "relays": {}
+                    }
+                    console.log(Object.keys(query))
+                    for (const tmp_internet_identifier of query) {
+                        console.log("tmp_internet_identifier")
+                        console.log(Object.keys(tmp_internet_identifier))
+                        console.log(tmp_internet_identifier._data)
+                        // tmp_nostr_dot_json.names[tmp_internet_identifier._data.content.username] = "TODO"
+                        // tmp_nostr_dot_json.relays["TODO"] = tmp_internet_identifier._data.content.relay_list
+                    }
+                    res.send({
+                        "status": "success",
+                        "success": "Now loop through and generate the nostr.json",
+                        "data": query,
+                        "nostr_dot_json" : tmp_nostr_dot_json
+                    })
+                    return true
+                } catch (error) {
+                    res.send({
+                        "status": "error",
+                        "success": "Failed to find internet identifiers for nostr_dot_json",
+                        "data": query,
+                        "error" : error
+                    })
+                    return true
+                }
+            } else {
+                res.send({
+                    "status": "error",
+                    "error": "That domain name is not configued to genereate nostr.json",
+                    "data": JSON.stringify(query, null, 2)
+                })
+                return true
+            }
         } catch (error) {
             res.send({
                 "status": "error",

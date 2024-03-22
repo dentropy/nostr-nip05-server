@@ -19,11 +19,14 @@
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "id" : {
-                        "type" : "string"
+                    "id": {
+                        "type": "string"
                     },
                     "username": {
                         "type": "string"
+                    },
+                    "public_key" : {
+                        "type" : "string"
                     },
                     "domain_name": {
                         "type": "string"
@@ -39,6 +42,66 @@
                     "username",
                     "domain_name",
                     "relay_list"
+                ]
+            }
+        },
+        {
+            "schema_name": "raw_nostr_dot_json",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "nostr_dot_json_stringified": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "domain_name",
+                    "relay_list"
+                ]
+            }
+        },
+        {
+            "schema_name": "nostr_dot_json",
+            "index_type": "indexed",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "domain_name",
+                "type": "object",
+                "properties": {
+                    "domain_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "nostr_dot_json": {
+                        "type": "object",
+                        "properties": {
+                            "names": {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            },
+                            "relays": {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            },
+                            "required": [
+                                "names",
+                                "relays"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "domain_name",
+                    "nostr_dot_json"
                 ]
             }
         }

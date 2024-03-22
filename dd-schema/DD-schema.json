@@ -15,38 +15,8 @@
         "dd20",
         "lightning-bitcoin-to-dd20",
         "dd-rbac",
-        "coupon-to-dd20"
+        "coupon-to-dd20",
+        "domain-name-metadata"
     ],
-    "schemas": [
-        {
-            "schema_name": "nostr_dot_json",
-            "index_type" : "cached",
-            "rxdb_json": {
-                "version": 0,
-                "primaryKey": "domain_name",
-                "type": "object",
-                "properties": {
-                    "domain_name": {
-                        "type": "string",
-                        "maxLength": 100
-                      },
-                    "names": {
-                      "type": "object",
-                      "properties": {},
-                      "required": []
-                    },
-                    "relays": {
-                      "type": "object",
-                      "properties": {},
-                      "required": []
-                    }
-                  },
-                  "required": [
-                    "domain_name",
-                    "names",
-                    "relays"
-                  ]
-            }
-        }
-    ]
+    "schemas": []
 }
