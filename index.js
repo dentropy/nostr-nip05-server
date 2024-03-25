@@ -1118,6 +1118,94 @@ app.post("/napi", async function (req, res) {
             }
         }
         if (nostr_content_json.body.operation_name == "transfer") {
+            // Check if token exists
+            let check_token_state = await MyDDSchema.rxdb[
+                ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd20.token_state"]
+            ]
+                .find({
+                    selector: {
+                        "id": nostr_content_json.body.token_id
+                    }
+                }).exec();
+            if (check_token_state.length == 0) {
+                res.send({
+                    "status": "error",
+                    "error": `That token does not exist`
+                })
+                return false
+            }
+            // Validate operation_data
+            if (!Object.keys(nostr_content_json.body.operation_data).includes("to_did")) {
+                res.send({
+                    "status": "error",
+                    "error": `to_did key is not in operation_data`
+                })
+                return false
+            }
+            if (Object.keys(nostr_content_json.body.operation_data).length != 1) {
+                res.send({
+                    "status": "error",
+                    "error": `invalid number of keys, should only be 1 and it should be to_did`
+                })
+                return false
+            }
+            // check from_did
+            if (nostr_content_json.body.from_did != nostr_did) {
+                res.send({
+                    "status": "error",
+                    "error": `from_did has to be generated from nostr key`,
+                    "data": {
+                        "nostr_did": nostr_did,
+                        "from_did_": nostr_content_json.body.from_did
+                    }
+                })
+                return false
+            }
+            // Check balance from_did
+            let check_from_did_balance = 0;
+            try {
+                check_from_did_balance = await MyDDSchema.rxdb[
+                    ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd20.token_balances"]
+                ]
+                    .find({
+                        selector: {
+                            "id": nostr_content_json.body.token_id + "_" + nostr_content_json.body.operation_data.to_did
+                        }
+                    }).exec();
+            } catch (error) {
+                res.send({
+                    "status": "error",
+                    "error": `Can't check token balance`,
+                    "error_description" : error
+                })
+                return false
+            }
+            // Verify from_did has enough balance
+            if(check_from_did_balance.length == 0){
+                res.send({
+                    "status": "error",
+                    "error": `from_did doesn't have a balance of that token`
+                })
+                return false
+            }
+            if(check_from_did_balance[0]._data.content.balance < nostr_content_json.body.value){
+                res.send({
+                    "status": "error",
+                    "error": `from_did doesn't have enought balance current balance is ${check_from_did_balance[0]._data.content.balance}`
+                })
+                return false
+            }
+            // Check nonce from_did
+            if(check_from_did_balance[0]._data.content.balance < nostr_content_json.body.value){
+                res.send({
+                    "status": "error",
+                    "error": `from_did doesn't have enought balance current balance is ${check_from_did_balance[0]._data.content.balance}`
+                })
+                return false
+            }
+            // Upsert substracted balance for from_did
+
+            // Add balance to_did
             res.send({
                 "status": "error",
                 "error": `transfer is not yet implimented`
