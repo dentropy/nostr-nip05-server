@@ -266,6 +266,13 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
   let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
   let query_ipns = ddroot[0]._data.content.app_ipns_lookup[query_name]
   let query_check = null
+  if (!Object.keys(query_data).includes("id")) {
+    return {
+      "status": "error",
+      "success": "your query_data requires an id key to use dd_upsert",
+      "query_data": query_data
+    }
+  }
   if (MyDDSchema.schemas[query_name].index_type == "logged") {
     console.log("LOGIGNG_ONCE_AGAIN")
     query_check = await MyDDSchema.rxdb[query_ipns]
@@ -278,9 +285,20 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
       previousCID = query_check[0]._data.id
     }
   }
-  console.log("query_data")
-  console.log(query_data)
-  let CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+  if (previousCID == undefined) {
+    previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
+  }
+  let CID_code = null;
+  try {
+    CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+  } catch (error) {
+    return {
+      "status": "error",
+      "error_description": error,
+      "error": "dd_upsert failed",
+      "data": query_data
+    }
+  }
   let tmp_upsert_data = {
     id: query_data.id,
     CID: CID_code,
