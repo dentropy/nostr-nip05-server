@@ -542,11 +542,11 @@ app.post("/napi", async function (req, res) {
         // Check if internet identifier is in database
         console.log("nostr_content_json.body.intenret_identifier")
         console.log(nostr_content_json.body.internet_identifier)
-        if(nostr_content_json.body.internet_identifier == undefined){
+        if (nostr_content_json.body.internet_identifier == undefined) {
             res.send({
                 "status": "error",
                 "error": `body.intenret_identifier can't be undefined`,
-                "body" : nostr_content_json.body
+                "body": nostr_content_json.body
             })
             return false
         }
@@ -572,12 +572,12 @@ app.post("/napi", async function (req, res) {
         if (query[0]._data.content.public_key == req.body.pubkey) {
             let uspert_error = null
             try {
-                let upsert_data =                     {
-                    id : nostr_content_json.body.internet_identifier,
-                    username : name,
-                    public_key : nostr_content_json.body.public_key,
-                    domain_name :domain_name,
-                    relay_list : nostr_content_json.body.relay_list
+                let upsert_data = {
+                    id: nostr_content_json.body.internet_identifier,
+                    username: name,
+                    public_key: nostr_content_json.body.public_key,
+                    domain_name: domain_name,
+                    relay_list: nostr_content_json.body.relay_list
                 }
                 // console.log("upsert_date")
                 // console.log(upsert_data)
@@ -592,7 +592,7 @@ app.post("/napi", async function (req, res) {
                     "status": "error",
                     "error": `dd_upsert failed to update nip05 internet_identifier`,
                     "error_description": error,
-                    "uspert_error" : uspert_error
+                    "uspert_error": uspert_error
                 })
                 return true
             }
@@ -610,8 +610,189 @@ app.post("/napi", async function (req, res) {
             })
             return true
         }
+    }
 
 
+    if (nostr_content_json.function_name == "dd_token") {
+        let raw_token_validation = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "title": "Generated schema for Root",
+            "type": "object",
+            "properties": {
+                "app_name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "token_id": {
+                    "type": "string"
+                },
+                "from_did": {
+                    "type": "string"
+                },
+                "opteraion_name": {
+                    "type": "string"
+                },
+                "timestamp_ms": {
+                    "type": "number"
+                },
+                "value": {
+                    "type": "number"
+                },
+                "did_nonce": {
+                    "type": "number"
+                },
+                "token_nonce": {
+                    "type": "number"
+                },
+                "memo": {
+                    "type": "string"
+                },
+                "operation_data": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            "required": [
+                "app_name",
+                "version",
+                "token_id",
+                "from_did",
+                "opteraion_name",
+                "timestamp_ms",
+                "value",
+                "did_nonce",
+                "token_nonce",
+                "memo",
+                "operation_data"
+            ]
+        }
+        var ajv = new Ajv()
+        var usert_data_json_schema = ajv.compile(raw_token_validation)
+        if (!usert_data_json_schema(nostr_content_json.body)) {
+            res.send({
+                "status": "error",
+                "error": `function upsert_data body must be validated against the following JSON_Schema\n${JSON.stringify(raw_token_validation, null, 2)}`
+            })
+            return false
+        }
+
+        // Check the token operations
+        if (nostr_content_json.body.operation_name == "deploy") {
+            let nostr_base58 = await bs58.encode(await text_encoder.encode(req.body.pubkey))
+            let nostr_did = "did:key:" + nostr_base58
+            let check_root_role = await MyDDSchema.rxdb[
+                ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]
+            ]
+                .findOne({
+                    selector: {
+                        "content.role": "root",
+                        "content.user_did": nostr_did
+                    }
+                }).exec();
+            if (check_root_role._data.content.user_did != nostr_did) {
+                res.send({
+                    "status": "error",
+                    "error": `Failed role validation, only root can deploy tokens`
+                })
+            }
+            let deploy_json_schema = {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "title": "Generated schema for Root",
+                "type": "object",
+                "properties": {
+                    "token_name": {
+                        "type": "string"
+                    },
+                    "token_ticker": {
+                        "type": "string"
+                    },
+                    "max_supply": {
+                        "type": "number"
+                    },
+                    "limit_per_mint": {
+                        "type": "number"
+                    },
+                    "decimals": {
+                        "type": "number"
+                    },
+                    "inital_token_admins": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "token_name",
+                    "token_ticker",
+                    "max_supply",
+                    "limit_per_mint",
+                    "decimals",
+                    "inital_token_admins"
+                ]
+            }
+            var ajv = new Ajv()
+            var dd_json_name_schema_validator = ajv.compile(deploy_json_schema)
+            if (!dd_json_name_schema_validator(nostr_content_json.body.operation_data)) {
+                res.send({
+                    "status": "error",
+                    "error": `stringified JSON in content of event does not follow this JSON schema \n\n${JSON.stringify(deploy_json_schema, null, 2)}`
+                })
+                return false
+            }
+            // Check if token already exists
+            // Validate token data
+                // token_nonce = 0
+                // token_balance = 0
+                // deployer address is in admins
+                // Admin list is less than 64
+                // Decimals is less than equal to 9
+            // Update token_state
+            // Update token_transactions
+            // Update balance
+                // Raw Upsert
+            res.send({
+                "status": "error",
+                "error": `deploy is not yet implimented`
+            })
+            return false
+        }
+        if (nostr_content_json.body.operation_name == "mint") {
+            res.send({
+                "status": "error",
+                "error": `mint is not yet implimented`
+            })
+            return false
+        }
+        if (nostr_content_json.body.operation_name == "transfer") {
+            res.send({
+                "status": "error",
+                "error": `transfer is not yet implimented`
+            })
+            return false
+        }
+        if (nostr_content_json.body.operation_name == "rekey") {
+            res.send({
+                "status": "error",
+                "error": `rekey is not yet implimented`
+            })
+            return false
+        }
+        if (nostr_content_json.body.operation_name == "burn") {
+            res.send({
+                "status": "error",
+                "error": `deploy is not yet implimented`
+            })
+            return false
+        }
+        res.send({
+            "status": "error",
+            "error": `burn is not yet implimented`
+        })
+        return false
     }
 
     res.send({

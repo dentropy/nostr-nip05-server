@@ -11,30 +11,134 @@
     ],
     "schemas": [
         {
-            "schema_name": "internet_identifiers",
+            "schema_name": "token_state",
             "index_type": "logged",
             "rxdb_json": {
                 "version": 0,
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "username": {
+                    "id": {
                         "type": "string"
                     },
-                    "domain_name": {
-                        "type": "string"
+                    "max_supply": {
+                        "type": "number"
                     },
-                    "relay_list": {
+                    "current_supply": {
+                        "type": "number"
+                    },
+                    "admin_dids": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "token_transaction_count": {
+                        "type": "number"
+                    },
+                    "last_transaction_timestamp_ms": {
+                        "type": "number"
                     }
                 },
                 "required": [
-                    "username",
-                    "domain_name",
-                    "relay_list"
+                    "id",
+                    "max_supply",
+                    "current_supply",
+                    "admin_dids",
+                    "token_transaction_count",
+                    "last_transaction_timestamp_ms"
+                ]
+            }
+        },
+        {
+            "schema_name": "token_transactions",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "app_name": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "token_id": {
+                        "type": "string"
+                    },
+                    "from_did": {
+                        "type": "string"
+                    },
+                    "opteraion_name": {
+                        "type": "string"
+                    },
+                    "timestamp_ms": {
+                        "type": "number"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "did_nonce": {
+                        "type": "number"
+                    },
+                    "token_nonce": {
+                        "type": "number"
+                    },
+                    "memo": {
+                        "type": "string"
+                    },
+                    "operation_data": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                },
+                "required": [
+                    "app_name",
+                    "version",
+                    "token_id",
+                    "from_did",
+                    "opteraion_name",
+                    "timestamp_ms",
+                    "value",
+                    "did_nonce",
+                    "token_nonce",
+                    "memo",
+                    "operation_data"
+                ]
+            }
+        },
+        {
+            "schema_name": "token_balances",
+            "index_type": "logged",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "token_id": {
+                        "type": "string"
+                    },
+                    "did": {
+                        "type": "string"
+                    },
+                    "nonce": {
+                        "type": "number"
+                    },
+                    "balance": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "id",
+                    "token_id",
+                    "did",
+                    "nonce",
+                    "balance"
                 ]
             }
         }

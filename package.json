@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test mocha \"tests/testCore*.js\"",
-    "testapi": "NODE_ENV=test mocha \"tests/testAPI*.js\""
+    "testapi": "NODE_ENV=test mocha \"tests/testAPI*.js\"",
+    "testt": "NODE_ENV=test mocha \"tests/testToken*.js\""
   },
   "keywords": [],
   "author": "",
