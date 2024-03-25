@@ -305,11 +305,31 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     previousCID: previousCID,
     content: query_data
   }
+  console.log("tmp_upsert_data")
+  console.log(tmp_upsert_data)
   query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
+
+
+  // let actually_check_query = await MyDDSchema.rxdb[query_ipns].find({
+  //   "selector" : {
+  //     "id" : tmp_upsert_data.id
+  //   }
+  // }).exec()
+  // if(actually_check_query.length == 0){
+  //   return {
+  //     "status": "error",
+  //     "success": "Could not find data that was supposed to be upserted",
+  //     "query_check": actually_check_query
+  //   }
+  // }
+  // console.log("actually_check_query")
+  // console.log(actually_check_query[0]._data)
+
+
   return {
     "status": "success",
     "success": "Seems to have inserted",
-    "query_check": query_check
+    "query_check": query_check._data
   }
 
 }

@@ -137,8 +137,8 @@ app.get('/.well-known/nostr.json', async (req, res) => {
 
 
 app.post("/napi", async function (req, res) {
-    console.log("req.body for /napi")
-    console.log(req.body)
+    // console.log("req.body for /napi")
+    // console.log(req.body)
 
     // Check if nostr event is valid
     let event_is_verified = await verifyEvent(req.body)
@@ -354,11 +354,10 @@ app.post("/napi", async function (req, res) {
         }
     }
 
-
+    let nostr_base58 = await bs58.encode(await text_encoder.encode(req.body.pubkey))
+    let nostr_did = "did:key:" + nostr_base58
     if (nostr_content_json.function_name == "generate_nostr_dot_json") {
         // Role validation
-        let nostr_base58 = await bs58.encode(await text_encoder.encode(req.body.pubkey))
-        let nostr_did = "did:key:" + nostr_base58
         let check_root_role = await MyDDSchema.rxdb[
             ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]
         ]
@@ -932,16 +931,191 @@ app.post("/napi", async function (req, res) {
             }
         }
         if (nostr_content_json.body.operation_name == "mint") {
-            // Check if token already exists
+            // Check if token exists
+            let check_token_state = await MyDDSchema.rxdb[
+                ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd20.token_state"]
+            ]
+                .find({
+                    selector: {
+                        "id": nostr_content_json.body.token_id
+                    }
+                }).exec();
+            if (check_token_state.length == 0) {
+                res.send({
+                    "status": "error",
+                    "error": `That token does not exist`
+                })
+                return false
+            }
             // Validate operation_data
+            if (!Object.keys(nostr_content_json.body.operation_data).includes("to_did")) {
+                res.send({
+                    "status": "error",
+                    "error": `to_did key is not in operation_data`
+                })
+                return false
+            }
+            if (Object.keys(nostr_content_json.body.operation_data).length != 1) {
+                res.send({
+                    "status": "error",
+                    "error": `invalid number of keys, should only be 1 and it should be to_did`
+                })
+                return false
+            }
+            // check from_did
+            if (nostr_content_json.body.from_did != nostr_did) {
+                res.send({
+                    "status": "error",
+                    "error": `from_did has to be generated from nostr key`,
+                    "data": {
+                        "nostr_did": nostr_did,
+                        "from_did_": nostr_content_json.body.from_did
+                    }
+                })
+                return false
+            }
+            // Check admin
+            if (!check_token_state[0]._data.content.admin_dids.includes(nostr_did)) {
+                res.send({
+                    "status": "error",
+                    "error": `nostr_did submitted is not in token_admin list`
+                })
+                return false
+            }
+            // TODO Check token_nonce
+            // Check only minting max ammount
+            if (check_token_state[0]._data.limit_per_mint < nostr_content_json.body.value) {
+                res.send({
+                    "status": "error",
+                    "error": `Trying to mint too many tokens limit is ${check_token_state[0]._data.content.limit_per_mint}`
+                })
+                return false
+            }
+            // Check if minting will reach max supply
+            if (check_token_state[0]._data.max_supply < check_token_state[0]._data.content.current_supply + nostr_content_json.body.value) {
+                res.send({
+                    "status": "error",
+                    "error": `Minting that many tokens will be more than max supply`,
+                    "data": {
+                        max_supply: check_token_state[0]._data.content.max_supply,
+                        current_supply: check_token_state[0]._data.content.current_supply
+                    }
+                })
+                return false
+            }
             // Add to transactions
-            // Add to token_state
+            nostr_content_json.body.id = nostr_content_json.body.token_id + "_" + nostr_content_json.body.token_nonce 
+            try {
+                let query_check = await dd_upsert(
+                    MyDDSchema,
+                    ddroot,
+                    "nostr-nip05-server.dd20.token_transactions",
+                    nostr_content_json.body
+                )
+            } catch (error) {
+                res.send({
+                    "status": "error",
+                    "error": `upsert "nostr-nip05-server.dd20.token_transactions" failed`
+                })
+                return false
+            }
+            // Update to token_state
+            try {
+                let tmp_token_state = JSON.parse(JSON.stringify(check_token_state[0]._data.content))
+                tmp_token_state.current_supply += nostr_content_json.body.value
+                tmp_token_state.token_transaction_count += 1
+                tmp_token_state.token_transaction_count += 1 
+                console.log("tmp_token_state")
+                console.log(tmp_token_state)
+                let query_check = await dd_upsert(
+                    MyDDSchema,
+                    ddroot,
+                    "nostr-nip05-server.dd20.token_state",
+                    tmp_token_state
+                )
+                console.log(Object.keys(query_check.query_check))
+                console.log(query_check.query_check._data)
+            } catch (error) {
+                res.send({
+                    "status": "error",
+                    "error": `upsert "nostr-nip05-server.dd20.token_state" failed`,
+                    "error_description" : error
+                })
+                return false
+            }
+            // Check Balance
+            let check_token_balance = 0;
+            try {
+                check_token_balance = await MyDDSchema.rxdb[
+                    ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd20.token_balances"]
+                ]
+                    .find({
+                        selector: {
+                            "id": nostr_content_json.body.token_id + "_" + nostr_content_json.body.operation_data.to_did
+                        }
+                    }).exec();
+            } catch (error) {
+                res.send({
+                    "status": "error",
+                    "error": `Can't check token balance`,
+                    "error_description" : error
+                })
+                return false
+            }
+
             // Add to balances
-            res.send({
-                "status": "error",
-                "error": `mint is not yet implimented`
-            })
-            return false
+            console.log("token_balance_id")
+            let token_balance_id = nostr_content_json.body.token_id + "_" + nostr_content_json.body.operation_data.to_did
+            console.log(token_balance_id)
+            if (check_token_balance.length == 0) {
+                let query_check = await dd_upsert(
+                    MyDDSchema,
+                    ddroot,
+                    "nostr-nip05-server.dd20.token_balances",
+                    {
+                        id: token_balance_id,
+                        token_id: nostr_content_json.body.token_id,
+                        did: nostr_content_json.body.operation_data.to_did,
+                        nonce: 0,
+                        balance: nostr_content_json.body.value
+
+                    }
+                )
+                res.send({
+                    "status": "success",
+                    "success": `${nostr_content_json.body.operation_data.to_did} balance set to ${nostr_content_json.body.value}`
+                })
+                return false
+            }
+            else {
+                let new_balance = check_token_balance[0]._data.balance + nostr_content_json.body.value
+                // Check did_nonce
+                if(check_token_balance[0]._data.content.did_nonce +1 != nostr_content_json.body.did_nonce){
+                    res.send({
+                        "status": "error",
+                        "error": `did nonce did not match, it is currently ${check_token_balance[0]._data.content.did_nonce}`
+                    })
+                    return false
+                }
+                let query_check = await dd_upsert(
+                    MyDDSchema,
+                    ddroot,
+                    "nostr-nip05-server.dd20.token_balances",
+                    {
+                        id: token_balance_id,
+                        token_id: nostr_content_json.body.token_id,
+                        did: nostr_did,
+                        nonce: 0,
+                        balance: new_balance
+
+                    }
+                )
+                res.send({
+                    "status": "success",
+                    "error": `${nostr_did} balance set to ${new_balance}`
+                })
+                return false
+            }
         }
         if (nostr_content_json.body.operation_name == "transfer") {
             res.send({
