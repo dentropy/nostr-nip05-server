@@ -27,6 +27,9 @@
                     "current_supply": {
                         "type": "number"
                     },
+                    "previous_CID": {
+                        "type": "string"
+                    },
                     "admin_dids": {
                         "type": "array",
                         "items": {
@@ -52,12 +55,22 @@
         },
         {
             "schema_name": "token_transactions",
-            "index_type": "logged",
+            "index_type": "raw",
             "rxdb_json": {
                 "version": 0,
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength" : 100
+                    },
+                    "CID" : {
+                        "type": "string"
+                    },
+                    "raw_transaction" : {
+                        "type" : "string"
+                    },
                     "app_name": {
                         "type": "string"
                     },
@@ -88,6 +101,9 @@
                     "memo": {
                         "type": "string"
                     },
+                    "last_transaction_CID": {
+                        "type": "string"
+                    },
                     "operation_data": {
                         "type": "object",
                         "properties": {},
@@ -95,6 +111,7 @@
                     }
                 },
                 "required": [
+                    "id",
                     "app_name",
                     "version",
                     "token_id",

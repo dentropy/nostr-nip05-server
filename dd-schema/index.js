@@ -167,67 +167,53 @@ async function setup_schema() {
     console.log(`Schema Name ${tmp_schema.schema_name}`)
     let tmp_properties = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.properties))
     let tmp_required = JSON.parse(JSON.stringify(tmp_schema.rxdb_json.required))
+    // Generate IPNS name
+    const iseed = randomBytes(32);
+    const ikeys = await ipns(iseed);
+    console.log("\n")
+    console.log("IPNS_KEY")
+    console.log(ikeys.base36.substring(7))
     if (tmp_schema.index_type == "logged") {
-      console.log("Got Logged")
-      try {
-        tmp_schema.rxdb_json.properties = {
-          id: {
-            type: 'string',
-            maxLength: 100
-          },
-          CID: {
-            type: 'string',
-            maxLength: 100
-          },
-          previousCID: {
-            type: 'string',
-            maxLength: 100
-          },
-          content: {
-            type: 'object',
-            properties: tmp_properties,
-            required: tmp_required
-          }
+      tmp_schema.rxdb_json.properties = {
+        id: {
+          type: 'string',
+          maxLength: 100
+        },
+        CID: {
+          type: 'string',
+          maxLength: 100
+        },
+        previousCID: {
+          type: 'string',
+          maxLength: 100
+        },
+        content: {
+          type: 'object',
+          properties: tmp_properties,
+          required: tmp_required
         }
-        tmp_schema.rxdb_json.required = [
-          "id",
-          "CID",
-          "previousCID",
-          "content"
-        ]
-        console.log("GOT_EM")
-        console.log(tmp_schema.rxdb_json)
-      } catch (error) {
-        console.log(`Failed to parse ${tmp_schema.schema_name}\nError:\n${error}`)
       }
-      // Generate IPNS name
-      const iseed = randomBytes(32);
-      const ikeys = await ipns(iseed);
-      console.log("\n")
-      console.log("IPNS_KEY")
-      console.log(ikeys.base36.substring(7))
-      // console.log(tmp_schema.schema_name)
-      // console.log(tmp_schema.rxdb_json)
-      var data = {
-        ipns: ikeys.base36.substring(7),
-        private_key: ikeys.privateKey,
-        timestamp_ms: new Date()
-      }
-
-
-      // Save IPNS name to ipns_store
-      await DDSchema.rxdb.ipns_store.upsert(data);
-
-      rootData.content.app_ipns_lookup[tmp_schema.schema_name] = ikeys.base36.substring(7)
-
-      // Add schema
-      let collection_schema = {}
-      collection_schema[ikeys.base36.substring(7)] = {
-        schema: tmp_schema.rxdb_json
-      }
-      await DDSchema.rxdb.addCollections(collection_schema)
-
+      tmp_schema.rxdb_json.required = [
+        "id",
+        "CID",
+        "previousCID",
+        "content"
+      ]
     }
+    var data = {
+      ipns: ikeys.base36.substring(7),
+      private_key: ikeys.privateKey,
+      timestamp_ms: new Date()
+    }
+    // Save IPNS name to ipns_store
+    await DDSchema.rxdb.ipns_store.upsert(data);
+    rootData.content.app_ipns_lookup[tmp_schema.schema_name] = ikeys.base36.substring(7)
+    // Add schema
+    let collection_schema = {}
+    collection_schema[ikeys.base36.substring(7)] = {
+      schema: tmp_schema.rxdb_json
+    }
+    await DDSchema.rxdb.addCollections(collection_schema)
   }
   // Upsert root data
   rootData.CID = String(CID.create(1, code, await sha256.digest(encode(rootData.content))))
@@ -273,8 +259,8 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
       "query_data": query_data
     }
   }
+  let tmp_upsert_data = query_data
   if (MyDDSchema.schemas[query_name].index_type == "logged") {
-    console.log("LOGIGNG_ONCE_AGAIN")
     query_check = await MyDDSchema.rxdb[query_ipns]
       .findOne({
         selector: {
@@ -284,26 +270,26 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     if (query_check._result != null) {
       previousCID = query_check[0]._data.id
     }
-  }
-  if (previousCID == undefined) {
-    previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
-  }
-  let CID_code = null;
-  try {
-    CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
-  } catch (error) {
-    return {
-      "status": "error",
-      "error_description": error,
-      "error": "dd_upsert failed",
-      "data": query_data
+    if (previousCID == undefined) {
+      previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
     }
-  }
-  let tmp_upsert_data = {
-    id: query_data.id,
-    CID: CID_code,
-    previousCID: previousCID,
-    content: query_data
+    let CID_code = null;
+    try {
+      CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+    } catch (error) {
+      return {
+        "status": "error",
+        "error_description": error,
+        "error": "dd_upsert failed",
+        "data": query_data
+      }
+    }
+    tmp_upsert_data = {
+      id: query_data.id,
+      CID: CID_code,
+      previousCID: previousCID,
+      content: query_data
+    }
   }
   console.log("tmp_upsert_data")
   console.log(tmp_upsert_data)
