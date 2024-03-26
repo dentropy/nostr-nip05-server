@@ -17,11 +17,13 @@ describe('Array', async function () {
   let secret_key = privateKeyFromSeedWords(mnemonic, "", 0)
   let public_key = getPublicKey(secret_key)
   let npub = nip19.npubEncode(public_key)
+  let nostr_did = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key)))
 
   let secret_key2 = privateKeyFromSeedWords(mnemonic, "", 1)
   let public_key2 = getPublicKey(secret_key2)
   let npub2 = nip19.npubEncode(public_key2)
   const text_encoder = new TextEncoder()
+  let nostr_did2 = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key2)))
 
   let mint_transaction = null;
   let mint_transaction_CID = null;
@@ -29,8 +31,6 @@ describe('Array', async function () {
   describe('Deploy a token', async function () {
 
 
-    let nostr_did = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key)))
-    let nostr_did2 = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key2)))
     let token_data = {
       "app_name": "DD_token_RBAC",
       "version": "0.0.1",
@@ -660,7 +660,11 @@ describe('Array', async function () {
         }
         assert.equal([1, 2, 3].indexOf(4), -1);
       });
-
     })
+
+
+
+
+    
   });
 });

@@ -18,18 +18,22 @@
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "coupon_code": {
+                    "id": {
                         "type": "string"
+                    },
+                    "coupon_description" : {
+                        "type" : "string"
                     },
                     "did_owner": {
                         "type": "string"
                     },
-                    "uses_left": {
-                        "type": "number"
+                    "token_id": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "coupon_code",
+                    "coupon_description",
                     "did_owner",
                     "uses_left"
                 ]
@@ -43,7 +47,7 @@
                 "primaryKey": "id",
                 "type": "object",
                 "properties": {
-                    "coupon_code": {
+                    "id": {
                         "type": "string"
                     },
                     "nostr_event_id": {

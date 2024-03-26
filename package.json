@@ -6,7 +6,8 @@
   "scripts": {
     "test": "NODE_ENV=test mocha \"tests/testCore*.js\"",
     "testapi": "NODE_ENV=test mocha \"tests/testAPI*.js\"",
-    "testt": "NODE_ENV=test mocha \"tests/testToken*.js\""
+    "testt": "NODE_ENV=test mocha \"tests/testToken*.js\"",
+    "testc": "NODE_ENV=test mocha \"tests/testCoupon*.js\""
   },
   "keywords": [],
   "author": "",
