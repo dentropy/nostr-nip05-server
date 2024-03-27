@@ -372,7 +372,7 @@ describe('Array', async function () {
           body: JSON.stringify(signedEvent)
         })
         fetch_response = await fetch_response.json()
-        console.log(JSON.stringify(fetch_response, null, 2))
+        // console.log(JSON.stringify(fetch_response, null, 2))
         assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
       } catch (error) {
         assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)

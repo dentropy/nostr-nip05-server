@@ -27,9 +27,11 @@ describe('Array', async function () {
     let mint_transaction_CID = null;
 
     describe('Create a Coupon', async function () {
-        // Test if private key is in database
+        // Deploy Token
 
-        // We need to mint the private key in the database some tokens
+        // Get public key from database
+
+        // We need to mint the private key in the database has some tokens
 
         // We need to create the coupon
 

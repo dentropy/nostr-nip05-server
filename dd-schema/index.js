@@ -260,37 +260,55 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     }
   }
   let tmp_upsert_data = query_data
-  if (MyDDSchema.schemas[query_name].index_type == "logged") {
-    query_check = await MyDDSchema.rxdb[query_ipns]
-      .findOne({
-        selector: {
-          "id": query_data.id
+  console.log("MyDDSchema.schemas[query_name]")
+  console.log(query_name)
+  console.log(MyDDSchema.schemas[query_name])
+  console.log(MyDDSchema.schemas)
+  try {
+    if (MyDDSchema.schemas[query_name].index_type == "logged") {
+      query_check = await MyDDSchema.rxdb[query_ipns]
+        .findOne({
+          selector: {
+            "id": query_data.id
+          }
+        })
+      if (query_check._result != null) {
+        previousCID = query_check[0]._data.id
+      }
+      if (previousCID == undefined) {
+        previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
+      }
+      let CID_code = null;
+      try {
+        CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+      } catch (error) {
+        return {
+          "status": "error",
+          "error_description": error,
+          "error": "dd_upsert failed",
+          "data": query_data
         }
-      })
-    if (query_check._result != null) {
-      previousCID = query_check[0]._data.id
-    }
-    if (previousCID == undefined) {
-      previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
-    }
-    let CID_code = null;
-    try {
-      CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
-    } catch (error) {
-      return {
-        "status": "error",
-        "error_description": error,
-        "error": "dd_upsert failed",
-        "data": query_data
+      }
+      tmp_upsert_data = {
+        id: query_data.id,
+        CID: CID_code,
+        previousCID: previousCID,
+        content: query_data
       }
     }
-    tmp_upsert_data = {
-      id: query_data.id,
-      CID: CID_code,
-      previousCID: previousCID,
-      content: query_data
+  } catch (error) {
+    console.log({
+      "status": "error",
+      "error": error,
+      "error_description": "Unable to perform dd_upsert due to error"
+    })
+    return {
+      "status": "error",
+      "error": error,
+      "error_description": "Unable to perform dd_upsert due to error"
     }
   }
+
   console.log("tmp_upsert_data")
   console.log(tmp_upsert_data)
   query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
