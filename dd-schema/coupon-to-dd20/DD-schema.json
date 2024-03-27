@@ -35,7 +35,7 @@
                     "coupon_code",
                     "coupon_description",
                     "did_owner",
-                    "uses_left"
+                    "token_id"
                 ]
             }
         },

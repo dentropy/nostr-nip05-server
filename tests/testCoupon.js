@@ -12,112 +12,520 @@ import { code } from 'multiformats/codecs/json'
 
 describe('Array', async function () {
 
+    const text_encoder = new TextEncoder()
     const mnemonic = "curve foster stay broccoli equal icon bamboo champion casino impact will damp"
     let mnemonic_validation = validateWords(mnemonic)
     let secret_key = privateKeyFromSeedWords(mnemonic, "", 0)
     let public_key = getPublicKey(secret_key)
     let npub = nip19.npubEncode(public_key)
-
+    let nostr_did = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key)))
     let secret_key2 = privateKeyFromSeedWords(mnemonic, "", 1)
     let public_key2 = getPublicKey(secret_key2)
     let npub2 = nip19.npubEncode(public_key2)
-    const text_encoder = new TextEncoder()
+    let nostr_did2 = "did:key:" + await bs58.encode(await text_encoder.encode(String(public_key2)))
 
+    let hot_did = null;
+    let hot_did_raw_public_key = null;
+    let fetched_token_CID = null;
+    let hot_did_nsec = null;
+    let did_owner = null;
     let mint_transaction = null;
     let mint_transaction_CID = null;
 
-    describe('Create a Coupon', async function () {
-        // Deploy Token
+    let token_data = {
+        "app_name": "DD_token_RBAC",
+        "version": "0.0.1",
+        "token_id": "bafkreiam2kiyfc35ygkzdipsx4hqg63ffklcl6lvutlzmpjcfmz5zl32yi",
+        "from_did": nostr_did,
+        "to_did": nostr_did,
+        "operation_name": "deploy",
+        "timestamp_ms": Date.now(),
+        "value": 1024,
+        "did_nonce": 0,
+        "token_nonce": 0,
+        "memo": "",
+        "operation_data": {
+            "token_name": "$TOKEN_NAME",
+            "token_ticker": "$TOKEN_TICKER",
+            "max_supply": 1024 * 1024 * 1024 * 1024,
+            "limit_per_mint": 1024 * 1024,
+            "decimals": 8,
+            "inital_token_admins": [
+                nostr_did
+            ]
+        }
+    }
+    let token_id = String(CID.create(1, code, await sha256.digest(encode(token_data))))
+    console.log("token_id")
+    console.log(token_id)
 
-        // Get public key from database
 
-        // We need to mint the private key in the database has some tokens
+    describe('deploy token and mint for hot wallet', async function () {
+        it('Literally deploy the token', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "dd_token",
+                        "body": token_data
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
 
-        // We need to create the coupon
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(JSON.parse(fetch_response.json_schema, null, 2)))
 
-        // We need to redeem the coupon
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
 
-        // We need to check the balance of the coupon
-        describe('Literally create the coupon', async function () {
-            it('upsert_data example', async function () {
-                let signedEvent = finalizeEvent({
-                    kind: 1,
-                    created_at: Math.floor(Date.now() / 1000),
-                    tags: [
-                        ['DD']
-                    ],
-                    content:
-                        JSON.stringify({
-                            "function_name": "upsert_data",
-                            "body": {
-                                "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
-                                "query_data": {
-                                    "id": "testcoupon",
-                                    "coupon_description": "Claim a *@ddaemon.org Internet Identifier",
-                                    "did_owner": public_key2,
-                                    "uses_left": 10
+
+
+
+        it('find_query get hot_did', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd-private-key-infastructure.private_keys",
+                            "query_data": {
+                                "selector": {}
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("hot_did")
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                hot_did = fetch_response.data[0].id
+                hot_did_raw_public_key = fetch_response.data[0].content.raw_public_key
+                hot_did_nsec = fetch_response.data[0].content.raw_private_key
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+        it('Literally mint the token', async function () {
+            // console.log("fetched_token_CID")
+            // console.log(fetched_token_CID)
+            did_owner = "did:key:" + await bs58.encode(await text_encoder.encode(String(hot_did_raw_public_key)))
+            mint_transaction_CID = String(CID.create(1, code, await sha256.digest(encode(mint_transaction))))
+            mint_transaction = {
+                "app_name": "DD_token_RBAC",
+                "version": "0.0.1",
+                "token_id": token_id,
+                "from_did": nostr_did,
+                "to_did": hot_did,
+                "operation_name": "mint",
+                "timestamp_ms": Date.now(),
+                "value": 420,
+                "did_nonce": 1,
+                "token_nonce": 1,
+                "memo": "",
+                "last_transaction_CID": token_id, // Only the first transaction can actualy do this
+                "operation_data": {}
+            }
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "dd_token",
+                        "body": mint_transaction
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log(fetch_response)
+
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+        it('find_query transaction 0 nostr-nip05-server.dd20.token_transactions', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_transactions",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_0"
                                 }
                             }
-                        }),
-                }, secret_key)
-                assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
-                try {
-                    let fetch_response = await fetch("http://localhost:8081/napi", {
-                        "method": "POST",
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(signedEvent)
-                    })
-                    fetch_response = await fetch_response.json()
-                    // console.log(fetch_response)
-                    assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
-                } catch (error) {
-                    assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
-                }
-                assert.equal([1, 2, 3].indexOf(4), -1);
-            });
-            it('find_query coupon=testcoupon', async function () {
-                let signedEvent = finalizeEvent({
-                    kind: 1,
-                    created_at: Math.floor(Date.now() / 1000),
-                    tags: [
-                        ['DD']
-                    ],
-                    content:
-                        JSON.stringify({
-                            "function_name": "find_query",
-                            "body": {
-                                "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
-                                "query_data": {
-                                    "selector": {
-                                        "id": "testcoupon"
-                                    }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+        it('find_query transaction 1 nostr-nip05-server.dd20.token_transactions', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_transactions",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_1"
                                 }
                             }
-                        }),
-                }, secret_key)
-                assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
-                try {
-                    let fetch_response = await fetch("http://localhost:8081/napi", {
-                        "method": "POST",
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(signedEvent)
-                    })
-                    fetch_response = await fetch_response.json()
-                    
-                    
-                    console.log(JSON.stringify(fetch_response, null, 2))
-                    
-                    
-                    assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
-                } catch (error) {
-                    assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
-                }
-                assert.equal([1, 2, 3].indexOf(4), -1);
-            });
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+        it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_balances",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_" + hot_did
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+    })
+
+    describe('Literally create the coupon', async function () {
+        it('upsert_data coupon into the database', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "upsert_data",
+                        "body": {
+                            "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
+                            "query_data": {
+                                "id": "testcoupon",
+                                "coupon_description": "Claim a *@ddaemon.org Internet Identifier",
+                                "did_owner": did_owner,
+                                "token_id": token_id
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+                // console.log(fetch_response)
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+        it('find_query coupon=testcoupon', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
+                            "query_data": {
+                                "selector": {
+                                    "id": "testcoupon"
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+    })
+    describe('Now CLAIM the coupon', async function () {
+        it('claim coupon=test_coupon, should produce an error', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "claim_coupon",
+                        "body": {
+                            "coupon_code": "test_coupon"
+                        }
+                    }),
+            }, secret_key2)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+
+                assert.equal(Object.keys(fetch_response).includes("error"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
         })
+
+
+        it('claim coupon=testcoupon', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "claim_coupon",
+                        "body": {
+                            "coupon_code": "testcoupon"
+                        }
+                    }),
+            }, secret_key2)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+        })
+
+        it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_balances",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_" + nostr_did2
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+        
     })
 })

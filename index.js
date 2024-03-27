@@ -170,11 +170,11 @@ app.post("/napi", async function (req, res) {
         return true
     }
     if (nostr_content_json.function_name == "dd_token") {
-        res.send(await dd_token_logic(MyDDSchema, ddroot, req, res, nostr_content_json))
+        res.send(await dd_token_logic(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
     if (nostr_content_json.function_name == "check_coupon") {
-        res.send(await check_coupon(MyDDSchema, ddroot, req, res, nostr_content_json))
+        res.send(await check_coupon(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
     if (nostr_content_json.function_name == "claim_coupon") {

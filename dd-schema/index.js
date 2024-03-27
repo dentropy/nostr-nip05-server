@@ -260,10 +260,10 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     }
   }
   let tmp_upsert_data = query_data
-  console.log("MyDDSchema.schemas[query_name]")
-  console.log(query_name)
-  console.log(MyDDSchema.schemas[query_name])
-  console.log(MyDDSchema.schemas)
+  // console.log("MyDDSchema.schemas[query_name]")
+  // console.log(query_name)
+  // console.log(MyDDSchema.schemas[query_name])
+  // console.log(MyDDSchema.schemas)
   try {
     if (MyDDSchema.schemas[query_name].index_type == "logged") {
       query_check = await MyDDSchema.rxdb[query_ipns]
@@ -309,8 +309,8 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
     }
   }
 
-  console.log("tmp_upsert_data")
-  console.log(tmp_upsert_data)
+  // console.log("tmp_upsert_data")
+  // console.log(tmp_upsert_data)
   query_check = await MyDDSchema.rxdb[query_ipns].upsert(tmp_upsert_data)
 
 
