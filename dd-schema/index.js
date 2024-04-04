@@ -155,6 +155,7 @@ async function setup_schema() {
   // Get root data to save updated IPNS name to root
   let rootData = {
     id: "root",
+    app_name : DDSchema.specification.app_names[0],
     CID: "CID_TODO",
     previousCID: "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey",
     content: {

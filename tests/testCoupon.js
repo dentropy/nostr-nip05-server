@@ -10,6 +10,7 @@ import { CID } from 'multiformats'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { code } from 'multiformats/codecs/json'
 
+
 describe('Array', async function () {
 
     const text_encoder = new TextEncoder()
@@ -32,6 +33,8 @@ describe('Array', async function () {
     let mint_transaction = null;
     let mint_transaction_CID = null;
 
+
+    let previousCID = null
     let token_data = {
         "app_name": "DD_token_RBAC",
         "version": "0.0.1",
@@ -59,9 +62,59 @@ describe('Array', async function () {
     console.log("token_id")
     console.log(token_id)
 
+    describe("Setup metadata", async function(){
+        it('upsert_data domain-name-metadata ddaemon.org', async function () {
 
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+      
+      
+            let signedEvent = finalizeEvent({
+              kind: 1,
+              created_at: Math.floor(Date.now() / 1000),
+              tags: [
+                ['DD']
+              ],
+              content:
+                JSON.stringify({
+                  "function_name": "upsert_data",
+                  "app_name" : app_config.app_name,
+                  "app_key" : app_config.app_key,
+                  "body": {
+                    "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
+                    "query_data": {
+                      "id" : "ddaemon.org.com-generate_nostr_dot_json",
+                      "domain_name": "ddaemon.org",
+                      "key": "generate_nostr_dot_json",
+                      "value": "true"
+                    }
+                  }
+                }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+              let fetch_response = await fetch("http://localhost:8081/napi", {
+                "method": "POST",
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(signedEvent)
+              })
+              fetch_response = await fetch_response.json()
+              // console.log(fetch_response)
+              assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+              assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+          });
+      
+    })
     describe('deploy token and mint for hot wallet', async function () {
         it('Literally deploy the token', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -70,6 +123,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "dd_token",
                         "body": token_data
                     }),
@@ -99,6 +154,9 @@ describe('Array', async function () {
 
 
         it('find_query get hot_did', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -107,6 +165,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.dd-private-key-infastructure.private_keys",
@@ -142,6 +202,9 @@ describe('Array', async function () {
 
 
         it('Literally mint the token', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             // console.log("fetched_token_CID")
             // console.log(fetched_token_CID)
             did_owner = "did:key:" + await bs58.encode(await text_encoder.encode(String(hot_did_raw_public_key)))
@@ -169,6 +232,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "dd_token",
                         "body": mint_transaction
                     }),
@@ -195,6 +260,9 @@ describe('Array', async function () {
         });
 
         it('find_query transaction 0 nostr-nip05-server.dd20.token_transactions', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -203,6 +271,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.dd20.token_transactions",
@@ -239,6 +309,9 @@ describe('Array', async function () {
 
 
         it('find_query transaction 1 nostr-nip05-server.dd20.token_transactions', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -247,6 +320,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.dd20.token_transactions",
@@ -282,6 +357,9 @@ describe('Array', async function () {
         });
 
         it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+            
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -290,6 +368,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.dd20.token_balances",
@@ -329,6 +409,9 @@ describe('Array', async function () {
 
     describe('Literally create the coupon', async function () {
         it('upsert_data coupon into the database', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -337,6 +420,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "upsert_data",
                         "body": {
                             "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
@@ -367,6 +452,9 @@ describe('Array', async function () {
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
         it('find_query coupon=testcoupon', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -375,6 +463,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.coupon-to-dd20.coupon_codes",
@@ -408,8 +498,13 @@ describe('Array', async function () {
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
     })
+
+
     describe('Now CLAIM the coupon', async function () {
         it('claim coupon=test_coupon, should produce an error', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -418,6 +513,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "claim_coupon",
                         "body": {
                             "coupon_code": "test_coupon"
@@ -447,6 +544,9 @@ describe('Array', async function () {
 
 
         it('claim coupon=testcoupon', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -455,6 +555,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "claim_coupon",
                         "body": {
                             "coupon_code": "testcoupon"
@@ -483,6 +585,9 @@ describe('Array', async function () {
         })
 
         it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
             let signedEvent = finalizeEvent({
                 kind: 1,
                 created_at: Math.floor(Date.now() / 1000),
@@ -491,6 +596,169 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_balances",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_" + nostr_did2
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+    })
+
+    describe('Claim internet identifier', async function () {
+
+
+        it('find_query nostr-nip05-server.dd20.token_state', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+      
+            let signedEvent = finalizeEvent({
+              kind: 1,
+              created_at: Math.floor(Date.now() / 1000),
+              tags: [
+                ['DD']
+              ],
+              content:
+                JSON.stringify({
+                  "app_name" : app_config.app_name,
+                  "app_key" : app_config.app_key,
+                  "function_name": "find_query",
+                  "body": {
+                    "query_name": "nostr-nip05-server.dd20.token_state",
+                    "query_data": {
+                      "selector": {
+                        "id": token_id
+                      }
+                    }
+                  }
+                }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+              let fetch_response = await fetch("http://localhost:8081/napi", {
+                "method": "POST",
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(signedEvent)
+              })
+              fetch_response = await fetch_response.json()
+            //   console.log("nostr-nip05-server.dd20.token_state")
+            //   console.log(fetch_response)
+            //   console.log(JSON.stringify(fetch_response, null, 2))
+      
+              previousCID = fetch_response.data[0].content.previous_CID
+
+              assert.equal(fetch_response.data[0].content.previous_CID != undefined, true)
+              assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+              assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+              assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+          });
+
+
+
+        it('Transfer token to server owner with memo', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+            console.log(previousCID)
+            assert.equal(previousCID != undefined, true, "Failed to fetch previousCID")
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                  ['DD']
+                ],
+                content:
+                  JSON.stringify({
+                    "app_name" : app_config.app_name,
+                    "app_key" : app_config.app_key,
+                    "function_name": "dd_token",
+                    "body": {
+                      "app_name": "DD_token_RBAC",
+                      "version": "0.0.1",
+                      "last_transaction_CID": previousCID,
+                      "token_id": token_id,
+                      "from_did": nostr_did2,
+                      "to_did": app_config.admin_did,
+                      "operation_name": "transfer",
+                      "timestamp_ms": Date.now(),
+                      "value": 1,
+                      "did_nonce": 1,
+                      "token_nonce": 2,
+                      "memo": JSON.stringify({internet_identifier : "testthetoken@ddaemon.org"}),
+                      "operation_data" : {}
+                    }
+        
+                  }),
+              }, secret_key2)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("TRANSFER_TOKEN_WITH_NIP05_INTERNET_IDENTIFIER")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response))
+
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+        })
+
+        it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.dd20.token_balances",
@@ -525,7 +793,119 @@ describe('Array', async function () {
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
 
+        it('find_query transaction 1 nostr-nip05-server.dd20.token_transactions', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
 
-        
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.dd20.token_transactions",
+                            "query_data": {
+                                "selector": {
+                                    "id": token_id + "_2"
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(fetch_response.data[0].CID != 0, true)
+                previousCID = fetch_response.data[0].id // #TODO fetch_response.data[0].CID
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+        it('Convert coupon to Internet Identifier', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+
+            console.log("previousCID_internet_identifier")
+            console.log(previousCID)
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
+                        "function_name": "claim_internet_identifier",
+                        "body": {
+                            "transaction_CID": previousCID
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("nostr-nip05-server.dd20.token_state")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                // assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+        it('Resolve /.well-known/nostr.json checking for', async function () {
+
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+      
+      
+            let fetch_response = await fetch("http://localhost:8081/.well-known/nostr.json")
+            fetch_response = await fetch_response.json()
+            
+            // console.log(fetch_response)
+
+            assert.equal(Object.keys(fetch_response).includes("names"), true, `key names missing from nostr.json`)
+            assert.equal(Object.keys(fetch_response.names).length >= 1, true, `no names in nostr.json`)
+            assert.equal(Object.keys(fetch_response.names).includes("testthetoken"), true, `username testthetoken did not take`)
+            assert.equal(Object.keys(fetch_response).includes("relays"), true, `key relays missing from nostr.json`)
+            assert.equal(Object.keys(fetch_response.relays).length >= 1, true, `no relays in nostr.json`)
+          })
     })
 })

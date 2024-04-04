@@ -22,7 +22,8 @@ import { find_query } from './lib/find-query.js';
 import { upsert_data } from './lib/upsert-data.js';
 import { claim_coupon } from './lib/claim-coupon.js';
 import { express_setup } from './lib/express-setup.js';
-import { generate_nostr_dot_json } from './lib/generate-nostr-dot-json.js';
+import { generate_nostr_dot_json_with_validation } from './lib/generate-nostr-dot-json-with-validation.js';
+import { claim_internet_identifier } from './lib/claim-internet-identifier.js';
 
 
 // Configure Express
@@ -79,7 +80,17 @@ app.get('/.well-known/nostr.json', async (req, res) => {
 });
 
 
+app.get('/apps', async (req, res) => {
+    res.send({
+        app_name  : setup_data.ddroot[0]._data.app_name,
+        app_key   : setup_data.ddroot[0].CID,
+        admin_did : setup_data.admin_did
+    })
+    return true
+})
+
 app.post("/napi", async function (req, res) {
+
     // console.log("req.body for /napi")
     // console.log(req.body)
 
@@ -106,7 +117,6 @@ app.post("/napi", async function (req, res) {
     }
 
     // Check for DD tag
-    // console.log(req.body.tags[0])
     if (req.body.tags[0][0] != 'DD') {
         res.send({
             "status": "error",
@@ -114,6 +124,7 @@ app.post("/napi", async function (req, res) {
         })
         return false
     }
+
 
     // Validate the nostr_content_json has a function_name and body
     let dd_json_name_schema = {
@@ -146,25 +157,35 @@ app.post("/napi", async function (req, res) {
     }
 
 
+    if(nostr_content_json.app_name != setup_data.ddroot[0]._data.app_name){
+        res.send({
+            "status": "error",
+            "error": `Invalid app_name please check /apps to discover what apps you can interact with\n${nostr_content_json.app_name}!=${setup_data.ddroot[0]._data.app_name}`,
+            "nostr_content_json" : nostr_content_json
+        })
+        return true
+    }
+    if(nostr_content_json.app_key != setup_data.ddroot[0].CID){
+        res.send({
+            "status": "error",
+            "error": `Invalid app_key please check /apps to discover what apps you can interact with`
+        })
+        return true
+    }
 
     // Series of if statments, with role validation, and actual function logic
     if (nostr_content_json.function_name == "upsert_data") {
         res.send(await upsert_data(MyDDSchema, ddroot, req, res, nostr_content_json))
         return true
     }
-
-
     if (nostr_content_json.function_name == "find_query") {
         res.send(await find_query(MyDDSchema, ddroot, req, res, nostr_content_json))
         return true
     }
-
     if (nostr_content_json.function_name == "generate_nostr_dot_json") {
-        res.send(await generate_nostr_dot_json(MyDDSchema, ddroot, req, res, nostr_content_json))
+        res.send(await generate_nostr_dot_json_with_validation(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
-
-
     if (nostr_content_json.function_name == "upsert_nip05") {
         res.send(await upsert_nip05(MyDDSchema, ddroot, req, res, nostr_content_json))
         return true
@@ -181,6 +202,11 @@ app.post("/napi", async function (req, res) {
         res.send(await claim_coupon(MyDDSchema, ddroot, req, res, nostr_content_json))
         return true
     }
+    if (nostr_content_json.function_name == "claim_internet_identifier") {
+        res.send(await claim_internet_identifier(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
+
 
     res.send({
         "status": "error",

@@ -16,10 +16,12 @@ describe('Array', async function () {
   let public_key2 = getPublicKey(secret_key2)
   let npub2 = nip19.npubEncode(public_key2)
 
-  describe('#indexOf()', async function () {
-
-
+  describe('Test API', async function () {
     it('upsert_data example', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -29,6 +31,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "upsert_data",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.nip05.internet_identifiers",
               "query_data": {
@@ -61,6 +65,10 @@ describe('Array', async function () {
 
 
     it('find_query example', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -70,6 +78,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.nip05.internet_identifiers",
               "query_data": {
@@ -100,6 +110,11 @@ describe('Array', async function () {
 
 
     it('upsert_data domain-name-metadata example.com', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -109,10 +124,12 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "upsert_data",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
               "query_data": {
-                "id" : "example.com-generate_nostr_dot_json",
+                "id": "example.com-generate_nostr_dot_json",
                 "domain_name": "example.com",
                 "key": "generate_nostr_dot_json",
                 "value": "true"
@@ -141,6 +158,11 @@ describe('Array', async function () {
 
 
     it('find_query domain-name-metadata example.com', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -150,11 +172,13 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
               "query_data": {
                 "selector": {
-                  "id" : "nostr-nip05-server.domain-name-metadata.domain_name_kv"
+                  "id": "nostr-nip05-server.domain-name-metadata.domain_name_kv"
                 }
               }
             }
@@ -181,6 +205,11 @@ describe('Array', async function () {
 
 
     it('function_name generate_nostr_dot_json', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -190,6 +219,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "generate_nostr_dot_json",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "domain_name": "example.com"
             }
@@ -216,6 +247,11 @@ describe('Array', async function () {
 
 
     it('find_query nostr-nip05-server.domain-name-metadata.domain_name_k example.com', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -225,11 +261,13 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
               "query_data": {
                 "selector": {
-                  "content.domain_name" : "example.com"
+                  "content.domain_name": "example.com"
                 }
               }
             }
@@ -257,6 +295,11 @@ describe('Array', async function () {
 
 
     it('find_query raw_nostr_dot_json', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -266,6 +309,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.nip05.raw_nostr_dot_json",
               "query_data": {
@@ -296,6 +341,11 @@ describe('Array', async function () {
 
 
     it('Resolve /.well-known/nostr.json', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let fetch_response = await fetch("http://localhost:8081/.well-known/nostr.json")
       fetch_response = await fetch_response.json()
       // console.log(JSON.stringify(fetch_response, null, 2))
@@ -307,6 +357,11 @@ describe('Array', async function () {
 
 
     it('upsert_nip05 as nip05 owner NOT ROOT', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -316,6 +371,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "upsert_nip05",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "internet_identifier": "test@example.com",
               "public_key": public_key2,
@@ -343,6 +400,11 @@ describe('Array', async function () {
 
 
     it('find_query check nip05 actually updated', async function () {
+
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -352,6 +414,8 @@ describe('Array', async function () {
         content:
           JSON.stringify({
             "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
             "body": {
               "query_name": "nostr-nip05-server.nip05.internet_identifiers",
               "query_data": {
@@ -382,13 +446,9 @@ describe('Array', async function () {
 
 
 
-    // Test not root
-    // Finish the upsert when there is something already in the database
-    // Test invalid nostr JSON
-
-
-    // 
-
+    // #TODO Test not root
+    // #TODO Finish the upsert when there is something already in the database
+    // #TODO Test invalid nostr JSON
 
   });
 });

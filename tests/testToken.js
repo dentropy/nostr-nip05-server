@@ -61,6 +61,9 @@ describe('Test Transactions', async function () {
     })
 
     it('Literally deploy the token', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -69,6 +72,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "dd_token",
             "body": token_data
           }),
@@ -96,6 +101,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query nostr-nip05-server.dd20.token_transactions', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -104,6 +112,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_state",
@@ -140,6 +150,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query nostr-nip05-server.dd20.token_transactions', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -148,6 +161,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_transactions",
@@ -184,6 +199,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query nostr-nip05-server.dd20.token_balances', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -192,6 +210,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_balances",
@@ -236,6 +256,9 @@ describe('Test Transactions', async function () {
   describe('Mint a token', async function () {
     let fetched_token_CID = null;
     it('find_query for mint nostr-nip05-server.dd20.token_state', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       // const delay = ms => new Promise(res => setTimeout(res, ms));
       // await delay(1000)
       let signedEvent = finalizeEvent({
@@ -246,6 +269,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_state",
@@ -284,6 +309,9 @@ describe('Test Transactions', async function () {
 
 
     it('Literally mint the token', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       // console.log("fetched_token_CID")
       // console.log(fetched_token_CID)
       mint_transaction_CID = String(CID.create(1, code, await sha256.digest(encode(mint_transaction))))
@@ -312,6 +340,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "dd_token",
             "body": mint_transaction
           }),
@@ -339,6 +369,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query for mint nostr-nip05-server.dd20.token_state', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       // const delay = ms => new Promise(res => setTimeout(res, ms));
       // await delay(1000)
       let signedEvent = finalizeEvent({
@@ -349,6 +382,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_state",
@@ -385,6 +420,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query for mint nostr-nip05-server.dd20.token_transactions', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -393,6 +431,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_transactions",
@@ -429,6 +469,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query for mint nostr-nip05-server.dd20.token_balances', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -437,6 +480,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_balances",
@@ -482,6 +527,9 @@ describe('Test Transactions', async function () {
 
     let previous_CID = null;
     it('find_query for get nonce and previous_CID nostr-nip05-server.dd20.token_state', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       // const delay = ms => new Promise(res => setTimeout(res, ms));
       // await delay(1000)
       let signedEvent = finalizeEvent({
@@ -492,6 +540,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_state",
@@ -530,7 +580,11 @@ describe('Test Transactions', async function () {
 
 
     it(`Literally transfer the token`, async function () {
-      console.log(`transfer previous_CID=${previous_CID}`)
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
+      // console.log(`transfer previous_CID=${previous_CID}`)
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -539,6 +593,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "dd_token",
             "body": {
               "app_name": "DD_token_RBAC",
@@ -585,6 +641,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query for mint nostr-nip05-server.dd20.token_transactions', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -593,6 +652,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_transactions",
@@ -629,6 +690,9 @@ describe('Test Transactions', async function () {
 
 
     it('find_query for mint nostr-nip05-server.dd20.token_balances', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+      
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -637,6 +701,8 @@ describe('Test Transactions', async function () {
         ],
         content:
           JSON.stringify({
+            "app_name" : app_config.app_name,
+            "app_key" : app_config.app_key,
             "function_name": "find_query",
             "body": {
               "query_name": "nostr-nip05-server.dd20.token_balances",
@@ -670,13 +736,5 @@ describe('Test Transactions', async function () {
       }
       assert.equal([1, 2, 3].indexOf(4), -1);
     });
-
-
-
-
   })
-
-
-
-
 });
