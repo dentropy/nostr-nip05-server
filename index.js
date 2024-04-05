@@ -80,6 +80,43 @@ app.get('/.well-known/nostr.json', async (req, res) => {
 });
 
 
+app.get('/:domain_name/.well-known/nostr.json', async (req, res) => {
+    // Get the first domain name from nip05
+    let query = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
+        find({
+            "selector": {
+                "content.key": "generate_nostr_dot_json"
+            }
+        }).exec()
+    if (query.length > 0) {
+        let nostr_dot_json_query = await MyDDSchema.
+            rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
+            find({
+                "selector": {
+                    "id": req.params.domain_name
+                }
+            }).exec()
+        if (nostr_dot_json_query.length == 0) {
+            res.send({
+                "status": "error",
+                "error": "nostr_dot_json_query did not return anything"
+            })
+            return true
+        }
+        // console.log(nostr_dot_json_query[0])
+        res.send(JSON.parse(nostr_dot_json_query[0]._data.content.nostr_dot_json_stringified))
+        return true
+    } else {
+        res.send({
+            "status": "error",
+            "error": "no nostr.json files configured"
+        })
+        return true
+    }
+});
+
+
 app.get('/apps', async (req, res) => {
     res.send({
         app_name  : setup_data.ddroot[0]._data.app_name,

@@ -37,7 +37,7 @@ describe('Array', async function () {
               "query_name": "nostr-nip05-server.nip05.internet_identifiers",
               "query_data": {
                 "id": "test@example.com",
-                "username": "test",
+                "user_name": "test",
                 "public_key": public_key2,
                 "domain_name": "example.com",
                 "relay_list": ["ws://ddaemon.org"]
