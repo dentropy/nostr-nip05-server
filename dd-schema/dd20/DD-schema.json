@@ -19,7 +19,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength" : 100
                     },
                     "max_supply": {
                         "type": "number"

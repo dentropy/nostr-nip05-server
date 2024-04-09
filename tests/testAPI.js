@@ -67,8 +67,6 @@ describe('Array', async function () {
     it('find_query example', async function () {
       let app_config = await fetch("http://localhost:8081/apps")
       app_config = await app_config.json()
-
-
       let signedEvent = finalizeEvent({
         kind: 1,
         created_at: Math.floor(Date.now() / 1000),
@@ -100,7 +98,11 @@ describe('Array', async function () {
           body: JSON.stringify(signedEvent)
         })
         fetch_response = await fetch_response.json()
+        
+        
         // console.log(JSON.stringify(fetch_response, null, 2))
+        
+        
         assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
       } catch (error) {
         assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
@@ -445,7 +447,95 @@ describe('Array', async function () {
     });
 
 
+    it('Set default domain_name', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
 
+
+      let signedEvent = finalizeEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['DD']
+        ],
+        content:
+          JSON.stringify({
+            "function_name": "upsert_data",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
+            "body": {
+              "query_name": "default_well_known_domain_name",
+              "query_data": {
+                "id": "default",
+                "domain_name" : "example.com"
+              }
+            }
+          }),
+      }, secret_key)
+      assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+      try {
+        let fetch_response = await fetch("http://localhost:8081/napi", {
+          "method": "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signedEvent)
+        })
+        fetch_response = await fetch_response.json()
+        // console.log(fetch_response)
+        assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+      } catch (error) {
+        assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+      }
+      assert.equal([1, 2, 3].indexOf(4), -1);
+    });
+
+
+    it('Find default domain name', async function () {
+      let app_config = await fetch("http://localhost:8081/apps")
+      app_config = await app_config.json()
+      let signedEvent = finalizeEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [
+          ['DD']
+        ],
+        content:
+          JSON.stringify({
+            "function_name": "find_query",
+            "app_name": app_config.app_name,
+            "app_key": app_config.app_key,
+            "body": {
+              "query_name": "default_well_known_domain_name",
+              "query_data": {
+                "selector": {
+                  "id": "default"
+                }
+              }
+            }
+          }),
+      }, secret_key)
+      assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+      try {
+        let fetch_response = await fetch("http://localhost:8081/napi", {
+          "method": "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signedEvent)
+        })
+        fetch_response = await fetch_response.json()
+        
+        
+        console.log(JSON.stringify(fetch_response, null, 2))
+        
+        
+        assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+      } catch (error) {
+        assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+      }
+      assert.equal([1, 2, 3].indexOf(4), -1);
+    });
     // #TODO Test not root
     // #TODO Finish the upsert when there is something already in the database
     // #TODO Test invalid nostr JSON

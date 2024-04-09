@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  frontend:
+    container_name: question-engine
+    # image: question-engine
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./deno-kv:/deno-kv
+    env_file:
+      - .env
+    command: deno run -A --allow-env --unstable-kv --unstable-broadcast-channel ./index.js

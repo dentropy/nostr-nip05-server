@@ -9,7 +9,7 @@
     "authors": [
         "dentropy@ddaemon.org"
     ],
-    "dependencies" : [
+    "dependencies": [
         "nip05",
         "pki",
         "dd20",
@@ -18,5 +18,27 @@
         "coupon-to-dd20",
         "domain-name-metadata"
     ],
-    "schemas": []
+    "schemas": [
+        {
+            "schema_name": "default_well_known_domain_name",
+            "index_type": "NOT_LOGGED",
+            "rxdb_json": {
+                "version": 0,
+                "primaryKey": "id",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength" : 100
+                    },
+                    "domain_name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "domain_name"
+                ]
+            }
+        }
+    ]
 }

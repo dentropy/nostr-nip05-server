@@ -297,6 +297,10 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
         content: query_data
       }
     }
+    cid_insert = await MyDDSchema.rxdb.cid_store.upsert({
+      id : CID_code,
+      CID : JSON.stringify(query_data)
+    })
   } catch (error) {
     console.log({
       "status": "error",
@@ -329,7 +333,6 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
   // }
   // console.log("actually_check_query")
   // console.log(actually_check_query[0]._data)
-
 
   return {
     "status": "success",

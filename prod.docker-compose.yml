@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+
+  caddy:
+    image: caddy:latest
+    container_name: q_engeine_caddy
+    hostname: q_engeine_caddy
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./volumes/Caddyfile:/etc/caddy/Caddyfile
+      - ./volumes/caddy_data:/data
+      - ./volumes/caddy_config:/config
+    restart: always
+
+  q_engine:
+    # image: q_engeine
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: q_engeine
+    hostname: q_engeine
+    ports:
+      - "8081:8081"
+    expose:
+      - 8081
+    volumes:
+      - ./volumes/deno-kv:/deno-kv
+    env_file:
+      - .env
+    command: deno run -A --allow-env --unstable-kv --unstable-broadcast-channel ./index.js
+
+  minio:
+    image: minio/minio
+    container_name: q_engine_minio
+    hostname: q_engine_minio
+    environment:
+      MINIO_ACCESS_KEY: 'minio_user'
+      MINIO_SECRET_KEY: 'minio_password'
+      MINIO_ADDRESS: ':9000'
+      MINIO_CONSOLE_ADDRESS: ':9001'
+      MINIO_SERVER_URL: 'http://localhost'
+      MINIO_BROWSER_REDIRECT_URL: 'http://localhost/console'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    expose:
+      - 9000
+      - 9001
+    volumes:
+      - ./volumes/minio:/data
+    command: server /data
+    restart: always
+
+  nostr-relay:
+    container_name: nostr_relay_sqlite
+    hostname: nostr_relay_sqlite
+    image: nostr_relay_sqlite
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    command: npm run start -- --port 3000 --file ./nostr.db
+
+  # simplex (SMP) while a nice protocol does not have a full client library that runs in a browser
+  # This is left here as a reminder to figure out a large group encryption schema
+  # Also I can't figure out matrix protocol's OLM library for the life of me
+
+  # simplex:
+  #   image: simplexchat/smp-server:latest
+  #   ports:
+  #     - "5223:5223"
+  #   expose:
+  #     - 5223
+  #   environment:
+  #     ADDR: '127.0.0.1'
+  #     PASS: 'password'
+  #   volumes:
+  #     - ./volumes/simplex/config:/etc/opt/simplex:z
+  #     - ./volumes/simplex/logs:/var/opt/simplex:z

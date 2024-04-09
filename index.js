@@ -24,7 +24,7 @@ import { claim_coupon } from './lib/claim-coupon.js';
 import { express_setup } from './lib/express-setup.js';
 import { generate_nostr_dot_json_with_validation } from './lib/generate-nostr-dot-json-with-validation.js';
 import { claim_internet_identifier } from './lib/claim-internet-identifier.js';
-
+import { set_web_key_identifier } from './lib/upsert-web-key-identifier.js'
 
 // Configure Express
 var app = express();
@@ -44,20 +44,37 @@ app.get('/', (req, res) => {
 
 
 app.get('/.well-known/nostr.json', async (req, res) => {
+    // Get the default domain name
+    let default_domain_name = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["default_well_known_domain_name"]].
+        find({
+            "selector": {
+                "id": "default"
+            }
+        }).exec()
+    if(default_domain_name.length == 0){
+        res.send({
+            "status": "error",
+            "error": "No default domain name configured"
+        })
+        return true
+    }
     // Get the first domain name from nip05
-    let query = await MyDDSchema.
+    let check_nostr_dot_json = await MyDDSchema.
         rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
         find({
             "selector": {
                 "content.key": "generate_nostr_dot_json"
+                ,"content.domain_name" : default_domain_name[0]._data.domain_name
+
             }
         }).exec()
-    if (query.length > 0) {
+    if (check_nostr_dot_json.length > 0) {
         let nostr_dot_json_query = await MyDDSchema.
             rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.nip05.raw_nostr_dot_json"]].
             find({
                 "selector": {
-                    "id": query[0]._data.content.domain_name
+                    "id": check_nostr_dot_json[0]._data.content.domain_name
                 }
             }).exec()
         if (nostr_dot_json_query.length == 0) {
@@ -241,6 +258,10 @@ app.post("/napi", async function (req, res) {
     }
     if (nostr_content_json.function_name == "claim_internet_identifier") {
         res.send(await claim_internet_identifier(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
+    if (nostr_content_json.function_name == "set_web_key_identifier") {
+        res.send(await set_web_key_identifier(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
 
