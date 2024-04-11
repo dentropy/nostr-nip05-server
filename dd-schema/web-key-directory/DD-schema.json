@@ -28,6 +28,9 @@
                     "username": {
                         "type": "string"
                     },
+                    "username_hash": {
+                        "type": "string"
+                    },
                     "domain_name": {
                         "type": "string"
                     },

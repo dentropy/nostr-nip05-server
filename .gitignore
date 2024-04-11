@@ -1,3 +1,4 @@
 node_modules
 deno-kv/
 volumes
+nostr_event_log

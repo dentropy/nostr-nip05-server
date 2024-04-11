@@ -253,6 +253,7 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
   let previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
   let query_ipns = ddroot[0]._data.content.app_ipns_lookup[query_name]
   let query_check = null
+  let CID_code = null
   if (!Object.keys(query_data).includes("id")) {
     return {
       "status": "error",
@@ -279,9 +280,18 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
       if (previousCID == undefined) {
         previousCID = "bafkreieghxguqf42lefdhwc2otdmbn5snq23skwewpjlrwl4mbgw6x7wey"
       }
-      let CID_code = null;
       try {
         CID_code = await String(CID.create(1, code, await sha256.digest(encode(query_data))))
+        // console.log("tmp_upsert_data")
+        // console.log(tmp_upsert_data)
+        // console.log("CID_code")
+        // console.log(CID_code)
+        // console.log("query_data")
+        // console.log(query_data)
+        let cid_insert = await MyDDSchema.rxdb.cid_store.upsert({
+          id : CID_code,
+          CID : JSON.stringify(query_data)
+        })
       } catch (error) {
         return {
           "status": "error",
@@ -297,10 +307,6 @@ export async function dd_upsert(MyDDSchema, ddroot, query_name, query_data) {
         content: query_data
       }
     }
-    cid_insert = await MyDDSchema.rxdb.cid_store.upsert({
-      id : CID_code,
-      CID : JSON.stringify(query_data)
-    })
   } catch (error) {
     console.log({
       "status": "error",

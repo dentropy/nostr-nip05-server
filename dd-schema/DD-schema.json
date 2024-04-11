@@ -16,7 +16,8 @@
         "lightning-bitcoin-to-dd20",
         "dd-rbac",
         "coupon-to-dd20",
-        "domain-name-metadata"
+        "domain-name-metadata",
+        "web-key-directory"
     ],
     "schemas": [
         {

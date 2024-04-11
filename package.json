@@ -7,7 +7,8 @@
     "test": "NODE_ENV=test mocha \"tests/testCore*.js\"",
     "testapi": "NODE_ENV=test mocha \"tests/testAPI*.js\"",
     "testt": "NODE_ENV=test mocha \"tests/testToken*.js\"",
-    "testc": "NODE_ENV=test mocha \"tests/testCoupon*.js\""
+    "testc": "NODE_ENV=test mocha \"tests/testCoupon*.js\"",
+    "testw": "NODE_ENV=test mocha \"tests/testWebKey*.js\""
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "mocha": "^10.3.0",
     "multiformats": "^13.1.0",
     "nostr-tools": "^2.3.2",
-    "rxdb": "^15.12.0"
+    "rxdb": "^15.12.0",
+    "zbase32": "^2.0.3"
   }
 }

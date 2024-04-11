@@ -37,6 +37,7 @@ let setup_data = await express_setup()
 let MyDDSchema = setup_data.MyDDSchema
 let ddroot = setup_data.ddroot
 
+const nostr_event_log = await Deno.openKv("./nostr_event_log/nostr_event_log.db");
 
 app.get('/', (req, res) => {
     res.send("Hello, World! This is a GET request. <a href='/.well-known/nostr.json'>Well Known</a>");
@@ -96,8 +97,67 @@ app.get('/.well-known/nostr.json', async (req, res) => {
     }
 });
 
+app.get('/.well-known/openpgpkey/hu/:key_identifier', async (req, res) => {
+    // Get the default domain name
+    console.log(req.params.key_identifier)
+    let default_domain_name = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["default_well_known_domain_name"]].
+        find({
+            "selector": {
+                "id": "default"
+            }
+        }).exec()
+    if(default_domain_name.length == 0){
+        res.send({
+            "status": "error",
+            "error": "No default domain name configured"
+        })
+        return true
+    }
+    // Try ans resolve the hash of username
+    let resolve_hash = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.web-key-directory.web_key_identifiers"]].
+        find({
+            "selector": {
+                "content.username_hash": req.params.key_identifier
+                ,"content.domain_name" : default_domain_name[0]._data.domain_name
 
-app.get('/:domain_name/.well-known/nostr.json', async (req, res) => {
+            }
+        }).exec()
+    if (resolve_hash.length == 0) {
+        res.send({
+            "status": "error",
+            "error": "Could not resolve hash of username"
+        })
+    } else {
+        res.send(resolve_hash[0]._data.content.pgp_key)
+        return true
+    }
+});
+
+app.get('/dd/:domain_name/.well-known/openpgpkey/hu/:key_identifier', async (req, res) => {
+    // Try ans resolve the hash of username
+    let resolve_hash = await MyDDSchema.
+        rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.web-key-directory.web_key_identifiers"]].
+        find({
+            "selector": {
+                "content.username_hash": req.params.key_identifier
+                ,"content.domain_name" : req.params.domain_name
+
+            }
+        }).exec()
+    if (resolve_hash.length == 0) {
+        res.send({
+            "status": "error",
+            "error": "Could not resolve hash of username"
+        })
+    } else {
+        res.send(resolve_hash[0]._data.content.pgp_key)
+        return true
+    }
+});
+
+app.get('/dd/:domain_name/.well-known/nostr.json', async (req, res) => {
     // Get the first domain name from nip05
     let query = await MyDDSchema.
         rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.domain-name-metadata.domain_name_kv"]].
@@ -157,7 +217,7 @@ app.post("/napi", async function (req, res) {
         })
         return false
     }
-
+    await nostr_event_log.set([req.body.id], JSON.stringify(req.body))
     // JSON.prase content form nostr event
     let nostr_content_json = {}
     try {
