@@ -451,6 +451,51 @@ describe('Array', async function () {
             }
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
+
+
+        it('check_coupon coupon=testcoupon', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name" : app_config.app_name,
+                        "app_key" : app_config.app_key,
+                        "function_name": "check_coupon",
+                        "body": {
+                            "coupon_code": "testcoupon"
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
         it('find_query coupon=testcoupon', async function () {
             let app_config = await fetch("http://localhost:8081/apps")
             app_config = await app_config.json()
@@ -497,6 +542,8 @@ describe('Array', async function () {
             }
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
+
+        
     })
 
 
