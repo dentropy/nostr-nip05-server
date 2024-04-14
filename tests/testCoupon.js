@@ -63,6 +63,8 @@ describe('Array', async function () {
     console.log(token_id)
 
     describe("Setup metadata", async function () {
+
+
         it('upsert_data domain-name-metadata ddaemon.org', async function () {
 
             let app_config = await fetch("http://localhost:8081/apps")
@@ -103,6 +105,103 @@ describe('Array', async function () {
                 fetch_response = await fetch_response.json()
                 // console.log(fetch_response)
                 assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+        it('upsert_data domain-name-metadata ddaemon.org for coupon redemption', async function () {
+
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "function_name": "upsert_data",
+                        "app_name": app_config.app_name,
+                        "app_key": app_config.app_key,
+                        "body": {
+                            "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
+                            "query_data": {
+                                "id": `ddaemon.org-${token_id}`,
+                                "domain_name": "ddaemon.org",
+                                "key": token_id,
+                                "value": "valid"
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+                // console.log(fetch_response)
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+
+        it('find_query domain-name-metadata ddaemon.org for coupon redemption', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name": app_config.app_name,
+                        "app_key": app_config.app_key,
+                        "function_name": "find_query",
+                        "body": {
+                            "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
+                            "query_data":{ 
+                                "selector": {
+                                    "content.key": token_id
+                                }
+                            }
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("find_query domain-name-metadata ddaemon.org for coupon redemption")
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                hot_did = fetch_response.data[0].id
+                hot_did_raw_public_key = fetch_response.data[0].content.raw_public_key
+                hot_did_nsec = fetch_response.data[0].content.raw_private_key
             } catch (error) {
                 assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
             }
@@ -465,8 +564,8 @@ describe('Array', async function () {
                 ],
                 content:
                     JSON.stringify({
-                        "app_name" : app_config.app_name,
-                        "app_key" : app_config.app_key,
+                        "app_name": app_config.app_name,
+                        "app_key": app_config.app_key,
                         "function_name": "check_coupon",
                         "body": {
                             "coupon_code": "testcoupon"
@@ -543,7 +642,7 @@ describe('Array', async function () {
             assert.equal([1, 2, 3].indexOf(4), -1);
         });
 
-        
+
     })
 
 
@@ -718,12 +817,12 @@ describe('Array', async function () {
                     body: JSON.stringify(signedEvent)
                 })
                 fetch_response = await fetch_response.json()
+
                 //   console.log("nostr-nip05-server.dd20.token_state")
                 //   console.log(fetch_response)
                 //   console.log(JSON.stringify(fetch_response, null, 2))
 
                 previousCID = fetch_response.data[0].content.previous_CID
-
                 assert.equal(fetch_response.data[0].content.previous_CID != undefined, true)
                 assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
                 assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
@@ -891,7 +990,55 @@ describe('Array', async function () {
         });
 
 
-        it('Convert coupon to Internet Identifier', async function () {
+
+        it('Check what domain names can be redeemed via Token', async function () {
+            let app_config = await fetch("http://localhost:8081/apps")
+            app_config = await app_config.json()
+
+            console.log("previousCID_internet_identifier")
+            console.log(previousCID)
+            let signedEvent = finalizeEvent({
+                kind: 1,
+                created_at: Math.floor(Date.now() / 1000),
+                tags: [
+                    ['DD']
+                ],
+                content:
+                    JSON.stringify({
+                        "app_name": app_config.app_name,
+                        "app_key": app_config.app_key,
+                        "function_name": "internet_identifier_token_checker",
+                        "body": {
+                            "token_id": token_id
+                        }
+                    }),
+            }, secret_key)
+            assert.equal(await verifyEvent(signedEvent), true, "verify Nostr event failed")
+            try {
+                let fetch_response = await fetch("http://localhost:8081/napi", {
+                    "method": "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signedEvent)
+                })
+                fetch_response = await fetch_response.json()
+
+                // console.log("internet_identifier_token_checker")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
+
+                assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
+                // assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
+            } catch (error) {
+                assert.equal(true, false, `fetch failed, you need to be running the server to run these tests\n${error}`)
+            }
+            assert.equal([1, 2, 3].indexOf(4), -1);
+        });
+
+
+
+        it('Convert_coupon_to_Internet_Identifier', async function () {
             let app_config = await fetch("http://localhost:8081/apps")
             app_config = await app_config.json()
 
@@ -925,9 +1072,9 @@ describe('Array', async function () {
                 })
                 fetch_response = await fetch_response.json()
 
-                // console.log("nostr-nip05-server.dd20.token_state")
-                // console.log(fetch_response)
-                // console.log(JSON.stringify(fetch_response, null, 2))
+                console.log("claim_internet_identifier")
+                console.log(fetch_response)
+                console.log(JSON.stringify(fetch_response, null, 2))
 
                 assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
                 // assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)

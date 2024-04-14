@@ -25,6 +25,10 @@ import { express_setup } from './lib/express-setup.js';
 import { generate_nostr_dot_json_with_validation } from './lib/generate-nostr-dot-json-with-validation.js';
 import { claim_internet_identifier } from './lib/claim-internet-identifier.js';
 import { set_web_key_identifier } from './lib/upsert-web-key-identifier.js'
+import { list_dd_tokens } from './lib/list-dd-tokens.js';
+import { get_dd_token_state } from './lib/get-dd-token-state.js';
+import { get_dd_token_event } from './lib/get-dd-token-event.js';
+import { internet_identifier_token_checker } from './lib/internet-identifier-token-checker.js';
 
 // Configure Express
 var app = express();
@@ -304,6 +308,10 @@ app.post("/napi", async function (req, res) {
         res.send(await upsert_nip05(MyDDSchema, ddroot, req, res, nostr_content_json))
         return true
     }
+    if (nostr_content_json.function_name == "set_web_key_identifier") {
+        res.send(await set_web_key_identifier(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
     if (nostr_content_json.function_name == "dd_token") {
         res.send(await dd_token_logic(MyDDSchema, ddroot, req, nostr_content_json))
         return true
@@ -320,11 +328,24 @@ app.post("/napi", async function (req, res) {
         res.send(await claim_internet_identifier(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
-    if (nostr_content_json.function_name == "set_web_key_identifier") {
-        res.send(await set_web_key_identifier(MyDDSchema, ddroot, req, nostr_content_json))
+    if (nostr_content_json.function_name == "internet_identifier_token_checker") {
+        res.send(await internet_identifier_token_checker(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
 
+    // Token Data Functions
+    if (nostr_content_json.function_name == "list_dd_tokens") {
+        res.send(await list_dd_tokens(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
+    if (nostr_content_json.function_name == "get_dd_token_state") {
+        res.send(await get_dd_token_state(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
+    if (nostr_content_json.function_name == "get_dd_token_event") {
+        res.send(await get_dd_token_event(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
 
     res.send({
         "status": "error",
