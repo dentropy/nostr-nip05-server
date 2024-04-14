@@ -54,8 +54,6 @@ async function setup(){
     console.log("multicodec_nostr_key")
     console.log(multicodec_nostr_key)
 
-    console.log("\n\n")
-    console.log("HELLOW WORLD")
     // console.log(ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"])
     console.log(MyDDSchema.rxdb[ddroot[0]._data.content.app_ipns_lookup["nostr-nip05-server.dd-rbac.user_to_role"]])
     console.log(Object.keys(MyDDSchema.rxdb.collections))
