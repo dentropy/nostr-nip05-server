@@ -1072,9 +1072,9 @@ describe('Array', async function () {
                 })
                 fetch_response = await fetch_response.json()
 
-                console.log("claim_internet_identifier")
-                console.log(fetch_response)
-                console.log(JSON.stringify(fetch_response, null, 2))
+                // console.log("claim_internet_identifier")
+                // console.log(fetch_response)
+                // console.log(JSON.stringify(fetch_response, null, 2))
 
                 assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
                 // assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)
