@@ -176,7 +176,7 @@ describe('Array', async function () {
                         "function_name": "find_query",
                         "body": {
                             "query_name": "nostr-nip05-server.domain-name-metadata.domain_name_kv",
-                            "query_data":{ 
+                            "query_data": {
                                 "selector": {
                                     "content.key": token_id
                                 }
