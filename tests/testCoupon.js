@@ -749,7 +749,8 @@ describe('Array', async function () {
                             "query_name": "nostr-nip05-server.dd20.token_balances",
                             "query_data": {
                                 "selector": {
-                                    "id": token_id + "_" + nostr_did2
+                                    "content.did" : nostr_did2
+                                    // "id": token_id + "_" + nostr_did2
                                 }
                             }
                         }
@@ -766,9 +767,9 @@ describe('Array', async function () {
                 })
                 fetch_response = await fetch_response.json()
 
-                // console.log("nostr-nip05-server.dd20.token_state")
-                // console.log(fetch_response)
-                // console.log(JSON.stringify(fetch_response, null, 2))
+                console.log("nostr-nip05-server.dd20.token_balances nostr_did2")
+                console.log(fetch_response)
+                console.log(JSON.stringify(fetch_response, null, 2))
 
                 assert.equal(Object.keys(fetch_response).includes("success"), true, `/napi request turned back with error\n${JSON.stringify(fetch_response)}`)
                 assert.equal(fetch_response.data.length > 0, true, `No actual results returned${JSON.stringify(fetch_response)}`)

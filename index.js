@@ -27,8 +27,9 @@ import { claim_internet_identifier } from './lib/claim-internet-identifier.js';
 import { set_web_key_identifier } from './lib/upsert-web-key-identifier.js'
 import { list_dd_tokens } from './lib/list-dd-tokens.js';
 import { get_dd_token_state } from './lib/get-dd-token-state.js';
-import { get_dd_token_event } from './lib/get-dd-token-event.js';
 import { internet_identifier_token_checker } from './lib/internet-identifier-token-checker.js';
+import { query_dd_token_balances } from './lib/query-dd-token-balances.js';
+import { query_dd_token_transactions } from './lib/query-dd-token-transactions.js';
 
 // Configure Express
 var app = express();
@@ -338,12 +339,16 @@ app.post("/napi", async function (req, res) {
         res.send(await list_dd_tokens(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
+    if (nostr_content_json.function_name == "query_dd_token_balances") {
+        res.send(await query_dd_token_balances(MyDDSchema, ddroot, req, nostr_content_json))
+        return true
+    }
     if (nostr_content_json.function_name == "get_dd_token_state") {
         res.send(await get_dd_token_state(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
-    if (nostr_content_json.function_name == "get_dd_token_event") {
-        res.send(await get_dd_token_event(MyDDSchema, ddroot, req, nostr_content_json))
+    if (nostr_content_json.function_name == "query_dd_token_transactions") {
+        res.send(await query_dd_token_transactions(MyDDSchema, ddroot, req, nostr_content_json))
         return true
     }
 
