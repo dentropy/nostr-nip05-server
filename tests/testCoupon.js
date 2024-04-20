@@ -1141,6 +1141,7 @@ describe('Array', async function () {
 
             assert.equal(Object.keys(fetch_response).includes("names"), true, `key names missing from nostr.json`)
             assert.equal(Object.keys(fetch_response.names).length >= 1, true, `no names in nostr.json`)
+            assert.equal(Object.keys(fetch_response.names).length >= 2, true, `New internet identifier was not added`)
             assert.equal(Object.keys(fetch_response.names).includes("testthetoken"), true, `username testthetoken did not take`)
             assert.equal(Object.keys(fetch_response).includes("relays"), true, `key relays missing from nostr.json`)
             assert.equal(Object.keys(fetch_response.relays).length >= 1, true, `no relays in nostr.json`)
